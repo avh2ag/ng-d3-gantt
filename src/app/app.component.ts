@@ -86,9 +86,10 @@ export class AppComponent {
       end_date: '12/30/2017',
     }
   ];
+  public chartContainerName = 'test-container';
   public config = {
-    data: this.data, // Your actuall data
-    element: '#Chart', // remove, make separate input
+    // data: this.data, // Your actuall data
+    element: `#${this.chartContainerName}`, // remove, make separate input
     box_padding: 10, // Padding for the blocks
     // metrics: {type: 'overall', years: [2016, 2017, 2018]}, // Type of gantt
     // metrics: {type: 'sprint', year: 2017, cycles: cycles}, // Type of gantt
