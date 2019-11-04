@@ -40,6 +40,7 @@ export class NgD3GanttService {
       end_date: moment().endOf('day').toDate()
     };
     // call draw
+    this.draw('initial');
   }
 
   private goToNext() {
@@ -65,7 +66,7 @@ export class NgD3GanttService {
               break;
       }
 
-    // draw('next');
+    this.draw('next');
   }
 
   private goToPrevious() {
@@ -90,7 +91,7 @@ export class NgD3GanttService {
             }
             break;
     }
-    // draw('previous');
+    this.draw('previous');
   }
   private  draw(state) {
     /* Inline functions from initial implementation */
@@ -110,20 +111,6 @@ export class NgD3GanttService {
             .text(function(d) {
                 return d.title
             })
-    }
-
-    function appendFooter (d, i) {
-        let footer = this.append('g')
-            .attr("transform", function(d, i) {
-                let position = config.box_padding;
-                if (position < 10) {
-                    position = 0;
-                }
-                return "translate(" + position + ", " + (y(i + 1) + 45) + ")";
-            })
-            .call(renderTerm)
-            .call(renderDuration)
-            .call(appendProgressBar)
     }
 
     function appendProgressBar(d, i){
@@ -149,70 +136,6 @@ export class NgD3GanttService {
           .attr('opacity', function(d) {
               let width = getWidth(d);
               return Number(width > PROGRESSBAR_BOUNDARY)
-          })
-  }
-
-  function appendStartLine() {
-      this.selectAll(".start-lines")
-          .data(data)
-          .enter()
-          .append("line")
-          .attr('class', 'start-lines')
-          .attr('stroke', function(d) {
-              return d.color
-          })
-          .attr("x1", function(d) {
-              return x(new Date(d.start_date)) + 10;
-          })
-          .attr("x2", function(d) {
-              return x(new Date(d.start_date)) + 10;
-          })
-          .attr("y1", 0)
-          .attr("y2", function(d, i) {
-              return (y(i + 1) + 20);
-          })
-
-      this.selectAll(".end-lines")
-          .data(data)
-          .enter()
-          .append("line")
-          .attr('stroke', function(d) {
-              return d.color
-          })
-          .attr('class', 'end-lines')
-          .attr("x1", function(d) {
-              return x(new Date(d.end_date)) + 5;
-          })
-          .attr("x2", function(d) {
-              return x(new Date(d.end_date)) + 5;
-          })
-          .attr("y1", 0)
-          .attr("y2", function(d, i) {
-              return (y(i + 1) + 20);
-          })
-
-  }
-
-  function renderTerm(d, i) {
-      this.append('text')
-          .attr('class', 'TermType')
-          .text(function(d) {
-              return d.term
-          })
-          .attr('opacity', function(d) {
-              return Number(getWidth(d) > 80)
-          })
-  }
-
-  function renderDuration(d, i) {
-      this.append('text')
-          .attr('class', 'Duration')
-          .attr('x', 80)
-          .text(function(d) {
-              return getDuration(d)
-          })
-          .attr('opacity', function(d) {
-              return Number(getWidth(d) > 200)
           })
   }
 
@@ -329,7 +252,7 @@ export class NgD3GanttService {
     let months = [];
     let header_ranges = [];
 
-    d3.select(this.config.element)[0][0].innerHTML = "";
+    d3.select(this.config.element)._groups[0][0].innerHTML = "";
 
     if (this.config.metrics.type == "monthly") {
         months = [this.config.metrics.month];
@@ -383,26 +306,27 @@ export class NgD3GanttService {
         width = d3.max([this.CHART_WIDTH, 400]) - margin.left - margin.right,
         height = this.CHART_HEIGHT - margin.top - margin.bottom;
 
-    let x = d3.time.scale()
+    let x = d3.scaleTime()
         .domain(date_boundary)
         .range([0, width])
 
 
-    let y = d3.scale.ordinal()
-        .rangeRoundBands([0, height], 0.1);
+    // let y = d3.scaleOrdinal()
+    //     .rangeRoundBands([0, height], 0.1);
+    let y = d3.scaleBand()
+      .rangeRound([0, height])
+      .padding(0.1);
 
     y.domain(this.data.map(function(d, i) {
         return i + 1;
     }));
 
-    let xAxis = d3.svg.axis()
+    let xAxis = d3.axisBottom()
         .scale(x)
-        .orient("bottom")
-        .tickFormat(d3.time.format("%d/%m/%Y"));
+        .tickFormat(d3.timeFormat("%d/%m/%Y"));
 
-    let yAxis = d3.svg.axis()
+    let yAxis = d3.axisLeft()
         .scale(y)
-        .orient("left")
         .tickSize(0)
         .tickPadding(6);
 
@@ -471,7 +395,43 @@ export class NgD3GanttService {
     let svg = DRAWAREA
         .append("g")
         .attr("transform", "translate(" + margin.left + "," + 0 + ")")
-        .call(appendStartLine);
+        .selectAll(".start-lines")
+          .data(data)
+          .enter()
+          .append("line")
+          .attr('class', 'start-lines')
+          .attr('stroke', function(d) {
+              return d.color
+          })
+          .attr("x1", function(d) {
+              return x(new Date(d.start_date)) + 10;
+          })
+          .attr("x2", function(d) {
+              return x(new Date(d.start_date)) + 10;
+          })
+          .attr("y1", 0)
+          .attr("y2", function(d, i) {
+              return (y(i + 1) + 20);
+          })
+        .selectAll(".end-lines")
+          .data(data)
+          .enter()
+          .append("line")
+          .attr('stroke', function(d) {
+              return d.color
+          })
+          .attr('class', 'end-lines')
+          .attr("x1", function(d) {
+              return x(new Date(d.end_date)) + 5;
+          })
+          .attr("x2", function(d) {
+              return x(new Date(d.end_date)) + 5;
+          })
+          .attr("y1", 0)
+          .attr("y2", function(d, i) {
+              return (y(i + 1) + 20);
+          });
+
 
     let lines = svg.append('g').attr("transform", "translate(0,0)")
 
@@ -515,7 +475,7 @@ export class NgD3GanttService {
         .attr("width", function(d) {
             return getWidth(d);
         })
-        .attr("height", y.rangeBand())
+        .attr("height", y.bandwidth())
         .text(function(d) {
             return d.name
         });
@@ -646,9 +606,7 @@ export class NgD3GanttService {
         .attr("transform", function(d, i) {
             return "translate(" + x(new Date(d.start_date)) + "," + 0 + ")";
         })
-        //.call(appendBar);
-        .each( function(d, i) {
-            this.append('rect')
+        .append('rect')
                 .attr('class', 'Single--Node')
                 .attr('rx', 5)
                 .attr('ry', 5)
@@ -659,9 +617,8 @@ export class NgD3GanttService {
                 })
                 .attr("width", function(d) {
                     return (getActualWidth(d) + 10);
-                })
-        
-        });
+                });
+      
 
     Blocks
         .append('g')
@@ -673,8 +630,69 @@ export class NgD3GanttService {
                 return "translate(0, 0)";
             }
         })
-        .call(appendTitle)
-        .call(appendFooter)
+    let title = Blocks.append('text')
+          .attr('class', 'Title')
+          .attr("x", config.box_padding)
+          .attr("y", function(d, i) {
+              return (y(i + 1) + 20)
+          })
+          .text(function(d) {
+              return d.title
+          });
+
+    let footer = title.append('g')
+        .attr("transform", function(d, i) {
+          let position = config.box_padding;
+          if (position < 10) {
+              position = 0;
+          }
+          return "translate(" + position + ", " + (y(i + 1) + 45) + ")";
+        })
+    let term = footer.append('text')
+          .attr('class', 'TermType')
+          .text(function(d) {
+              return d.term
+          })
+          .attr('opacity', function(d) {
+              return Number(getWidth(d) > 80)
+          });
+    let duration = Blocks
+      .append('text')
+            .attr('class', 'Duration')
+            .attr('x', 80)
+            .text(function(d) {
+                return getDuration(d)
+            })
+            .attr('opacity', function(d) {
+                return Number(getWidth(d) > 200)
+            });
+    let progressBar = Blocks
+      .append('rect')
+          .attr('class', 'ProgressBar')
+          .attr('fill', '#ddd')
+          .attr('width', PROGRESSBAR_WIDTH)
+      .append('rect')
+          .attr('class', 'ProgressBar ProgressBar-Fill')
+          .attr('fill', 'red')
+          .attr('width', function(d) {
+              let width = ((d.completion_percentage * PROGRESSBAR_WIDTH) / 100);
+              return width;
+          })
+      .selectAll('.ProgressBar')
+          .attr('rx', 5)
+          .attr('ry', 5)
+          .attr('y', -7)
+          .attr('height', 7)
+          .attr('x', 180)
+          .attr('opacity', function(d) {
+              let width = getWidth(d);
+              return Number(width > PROGRESSBAR_BOUNDARY)
+          });
+      
+      
+      //.call(appendProgressBar)
+    
+    
 
     Blocks
         .on('click', function(d) {
@@ -743,7 +761,7 @@ export class NgD3GanttService {
 
             d3.select(this).each(function(d, i) {
                 let width = ((d3.max([getWidth(d), 500])) + 10);
-                trimTitle(width, this, this.config.box_padding * 2)
+                trimTitle(width, this, config.box_padding * 2)
             })
         })
         .on('mouseout', function(d, i) {
@@ -779,12 +797,12 @@ export class NgD3GanttService {
 
             d3.select(this).each(function(d, i) {
                 let width = getWidth(d);
-                trimTitle(width, this, this.config.box_padding * 2)
+                trimTitle(width, this, config.box_padding * 2)
             })
         })
         .each(function(d, i) {
             let width = getWidth(d);
-            trimTitle(width, this, this.config.box_padding * 2)
+            trimTitle(width, this, config.box_padding * 2)
         });
 
   }

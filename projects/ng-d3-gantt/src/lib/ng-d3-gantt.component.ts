@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, AfterViewInit } from '@angular/core';
+import { Component, OnInit, Input, AfterViewInit, ViewEncapsulation } from '@angular/core';
 import { NgD3GanttService } from './ng-d3-gantt.service';
 import { IGanttConfig } from './ng-d3-gantt.interface';
 
@@ -10,7 +10,7 @@ import { IGanttConfig } from './ng-d3-gantt.interface';
       ng-d3-gantt works!
     </div>
   `,
-  styles: []
+  styles: [],
 })
 export class NgD3GanttComponent implements OnInit, AfterViewInit {
   @Input() chartElementId = 'ng-gantt-chart';
