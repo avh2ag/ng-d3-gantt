@@ -107,43 +107,6 @@ export class NgD3GanttService {
     const PROGRESSBAR_WIDTH = this.PROGRESSBAR_WIDTH;
     const PROGRESSBAR_BOUNDARY = this.PROGRESSBAR_BOUNDARY;
 
-    function appendTitle(d, i) {
-        this.append('text')
-            .attr('class', 'Title')
-            .attr('x', config.box_padding)
-            .attr('y', function(d, i) {
-                return (y(i + 1) + 20)
-            })
-            .text(function(d) {
-                return d.title
-            })
-    }
-
-    function appendProgressBar(d, i) {
-      this.append('rect')
-          .attr('class', 'ProgressBar')
-          .attr('fill', '#ddd')
-          .attr('width', PROGRESSBAR_WIDTH);
-
-      this.append('rect')
-          .attr('class', 'ProgressBar ProgressBar-Fill')
-          .attr('fill', 'red')
-          .attr('width', function(d) {
-              let width = ((d.completion_percentage * PROGRESSBAR_WIDTH) / 100);
-              return width;
-          })
-
-      this.selectAll('.ProgressBar')
-          .attr('rx', 5)
-          .attr('ry', 5)
-          .attr('y', -7)
-          .attr('height', 7)
-          .attr('x', 180)
-          .attr('opacity', function(d) {
-              let width = getWidth(d);
-              return Number(width > PROGRESSBAR_BOUNDARY)
-          })
-  }
 
     function getDuration(d) {
         const startDate = moment(d.start_date, 'MM/DD/YYYY').format('DD MMM');
@@ -152,11 +115,9 @@ export class NgD3GanttService {
     }
 
     const trimTitle = (width, node, padding) => {
-
-        let textBlock = d3.select(node).select('.Title')
-
-        let textLength = textBlock.node().getComputedTextLength(),
-            text = textBlock.text()
+        const textBlock = d3.select(node).select('.Title')
+        let textLength = textBlock.node().getComputedTextLength();
+        let text = textBlock.text();
         while (textLength > (width - padding) && text.length > 0) {
             text = text.slice(0, -1);
             textBlock.text(text + '...');
@@ -166,9 +127,9 @@ export class NgD3GanttService {
 
     const getWidth = (node) => {
       if (endsAfter(node)) {
-          width = Math.abs(x(new Date(date_boundary[1])) - x(new Date(node.start_date)));
+          width = Math.abs(x(new Date(dateBoundary[1])) - x(new Date(node.start_date)));
       } else if (startsBefore(node)) {
-          width = Math.abs(x(new Date(date_boundary[0])) - x(new Date(node.end_date)));
+          width = Math.abs(x(new Date(dateBoundary[0])) - x(new Date(node.end_date)));
       } else {
           width = getActualWidth(node);
       }
@@ -180,25 +141,24 @@ export class NgD3GanttService {
     };
 
     const startsBefore = (node) => {
-      return moment(node.start_date, 'MM/DD/YYYY').isBefore(date_boundary[0])
+      return moment(node.start_date, 'MM/DD/YYYY').isBefore(dateBoundary[0]);
     };
 
     const endsAfter = (node) => {
-      return moment(node.end_date, 'MM/DD/YYYY').isAfter(date_boundary[1]);
+      return moment(node.end_date, 'MM/DD/YYYY').isAfter(dateBoundary[1]);
     };
 
     const isVisible = (node) => {
-      const start_date_visible = moment(node.start_date, 'MM/DD/YYYY').isBetween(date_boundary[0], date_boundary[1], 'days');
-      const end_date_visible = moment(node.end_date, 'MM/DD/YYYY').isBetween(date_boundary[0], date_boundary[1], 'days');
-
-      return start_date_visible || end_date_visible;
+      const startDateVisible = moment(node.start_date, 'MM/DD/YYYY').isBetween(dateBoundary[0], dateBoundary[1], 'days');
+      const endDateVisible = moment(node.end_date, 'MM/DD/YYYY').isBetween(dateBoundary[0], dateBoundary[1], 'days');
+      return startDateVisible || endDateVisible;
     };
 
     const getDaysRange = (months) => {
-        let ranges = [];
-        months.map(function(month) {
-            let startOfMonth = moment(month, 'MMM YYYY').startOf('month')
-            let endOfMonth = moment(month, 'MMM YYYY').endOf('month')
+        const ranges = [];
+        months.map((month) => {
+            const startOfMonth = moment(month, 'MMM YYYY').startOf('month');
+            const endOfMonth = moment(month, 'MMM YYYY').endOf('month');
             let day = startOfMonth;
 
             while (day <= endOfMonth) {
@@ -214,62 +174,58 @@ export class NgD3GanttService {
     };
 
     const getMonthsRange = (months) => {
-        let ranges = [];
-        months.map(function(month) {
-            let startOfMonth = moment(month, 'MMM YYYY').startOf('month')
-            let endOfMonth = moment(month, 'MMM YYYY').endOf('month')
-
-            ranges.push({
-                name: moment(startOfMonth).format('MMMM'),
-                start_date: startOfMonth.toDate(),
-                end_date: endOfMonth.clone().add(1, 'd').toDate(),
-            });
-
-
+        const ranges = [];
+        months.map(month => {
+          const startOfMonth = moment(month, 'MMM YYYY').startOf('month');
+          const endOfMonth = moment(month, 'MMM YYYY').endOf('month');
+          ranges.push({
+              name: moment(startOfMonth).format('MMMM'),
+              start_date: startOfMonth.toDate(),
+              end_date: endOfMonth.clone().add(1, 'd').toDate(),
+          });
         });
 
         return ranges;
     };
 
     const getYearBoundary = (year) => {
-        let yearDate = moment(year, 'YYYY');
-        let startOfYear = moment(yearDate).startOf('year');
-        let endOfYear = moment(yearDate).endOf('year');
-
-        return {
-            name: year,
-            start_date: startOfYear.toDate(),
-            end_date: endOfYear.toDate(),
-        };
+      const yearDate = moment(year, 'YYYY');
+      const startOfYear = moment(yearDate).startOf('year');
+      const endOfYear = moment(yearDate).endOf('year');
+      return {
+          name: year,
+          start_date: startOfYear.toDate(),
+          end_date: endOfYear.toDate(),
+      };
     };
 
     const getMonthsOftheYear = (year) => {
         let months = moment.months();
-        months = months.map(function(month) {
+        months = months.map( month => {
             month = month + ' ' + year;
             return month;
         });
         return months;
-    }
+    };
 
-    let date_boundary = [];
+    const dateBoundary = [];
     let subheader_ranges = [];
     let months = [];
     let header_ranges = [];
 
     d3.select(this.config.element)._groups[0][0].innerHTML = '';
 
-    if (this.config.metrics.type == 'monthly') {
+    if (this.config.metrics.type === 'monthly') {
         months = [this.config.metrics.month];
         header_ranges = getMonthsRange(months);
         subheader_ranges = getDaysRange(months);
-    } else if (this.config.metrics.type == 'overall') {
-        let years = this.config.metrics.years,
-            yearsRange = [];
-        years.map(function(year) {
-            months = months.concat(getMonthsOftheYear(year))
+    } else if (this.config.metrics.type === 'overall') {
+        const years = this.config.metrics.years;
+        const yearsRange = [];
+        years.map( year => {
+            months = months.concat(getMonthsOftheYear(year));
             yearsRange.push(getYearBoundary(year));
-        })
+        });
         header_ranges = [{
             name: 'Overall View',
             start_date: yearsRange[0].start_date,
@@ -278,11 +234,10 @@ export class NgD3GanttService {
         subheader_ranges = yearsRange;
 
     } else {
-        if (this.config.metrics.type == 'quarterly') {
+        if (this.config.metrics.type === 'quarterly') {
             months = this.config.metrics.months;
             subheader_ranges = getMonthsRange(months);
-            let year = moment(this.config.metrics.months[0], 'MMMM YYYY').format('YYYY');
-
+            const year = moment(this.config.metrics.months[0], 'MMMM YYYY').format('YYYY');
 
             header_ranges = [{
                 start_date: moment(this.config.metrics.months[0], 'MMMM YYYY').startOf('month').toDate(),
@@ -303,16 +258,16 @@ export class NgD3GanttService {
 
     }
 
-    date_boundary[0] = moment(months[0], 'MMM YYYY').startOf('month').toDate();
-    date_boundary[1] = moment(months[months.length - 1], 'MMM YYYY').endOf('month').toDate();
+    dateBoundary[0] = moment(months[0], 'MMM YYYY').startOf('month').toDate();
+    dateBoundary[1] = moment(months[months.length - 1], 'MMM YYYY').endOf('month').toDate();
 
 
-    let margin = { top: 20, right: 50, bottom: 100, left: 50 },
-        width = d3.max([this.CHART_WIDTH, 400]) - margin.left - margin.right,
-        height = this.CHART_HEIGHT - margin.top - margin.bottom;
+    let margin = { top: 20, right: 50, bottom: 100, left: 50 };
+    let width = d3.max([this.CHART_WIDTH, 400]) - margin.left - margin.right;
+    let height = this.CHART_HEIGHT - margin.top - margin.bottom;
 
     let x = d3.scaleTime()
-        .domain(date_boundary)
+        .domain(dateBoundary)
         .range([0, width])
 
 
@@ -487,8 +442,8 @@ export class NgD3GanttService {
 
     second_section
         .append('rect')
-        .attr('x', x(new Date(date_boundary[0])))
-        .attr('width', Math.abs(x(new Date(date_boundary[0])) - x(new Date(date_boundary[1]))))
+        .attr('x', x(new Date(dateBoundary[0])))
+        .attr('width', Math.abs(x(new Date(dateBoundary[0])) - x(new Date(dateBoundary[1]))))
         .attr('height', 40)
         .attr('class', 'Date-Block-Outline');
 
@@ -499,15 +454,15 @@ export class NgD3GanttService {
         .data(subheader_ranges)
         .enter()
         .append('rect')
-        .attr('x', function(d) {
-            return x(new Date(d.start_date))
+        .attr('x', d => {
+            return x(new Date(d.start_date));
         })
-        .attr('width', function(d) {
+        .attr('width', d => {
             return getWidth(d);
         })
         .attr('height', 40)
         .attr('class', function(d) {
-            return 'Date-Block Date-' + moment(d.start_date).format('MMYYYY')
+            return 'Date-Block Date-' + moment(d.start_date).format('MMYYYY');
         });
 
     second_section
@@ -515,18 +470,18 @@ export class NgD3GanttService {
         .selectAll('.bar')
         .data(subheader_ranges)
         .enter().append('text')
-        .attr('x', function(d) {
+        .attr('x', d => {
             return (x(new Date(d.start_date)) + 10);
         })
-        .attr('width', function(d) {
+        .attr('width', d => {
             return getWidth(d);
         })
         .attr('y', 25)
-        .text(function(d) {
+        .text( d => {
             return d.name;
         })
-        .attr('class', function(d) {
-            return 'second-title Date Date-' + moment(d).format('MMYYYY')
+        .attr('class', d => {
+            return 'second-title Date Date-' + moment(d).format('MMYYYY');
         });
 
 
@@ -535,23 +490,23 @@ export class NgD3GanttService {
         .enter()
         .append('line')
         .attr('class', 'date-line')
-        .attr('x1', function(d) {
+        .attr('x1', d => {
             return x(new Date(d.start_date));
         })
-        .attr('x2', function(d) {
+        .attr('x2', d => {
             return x(new Date(d.start_date));
         })
         .attr('y1', 0)
-        .attr('y2', height)
+        .attr('y2', height);
 
 
 
-    if (this.data.length == 0) {
-        let EmptyBlockX = ((this.CHART_WIDTH / 2) - (this.EMPTYBLOCK_WIDTH / 2)),
-            EMPTYBLOCK = DRAWAREA
-            .append('g')
-            .attr('class', 'EmptyMessageBlock')
-            .attr('transform', 'translate(' + EmptyBlockX + ', 20)')
+    if (this.data.length === 0) {
+        const EmptyBlockX = ((this.CHART_WIDTH / 2) - (this.EMPTYBLOCK_WIDTH / 2));
+        const EMPTYBLOCK = DRAWAREA
+                          .append('g')
+                          .attr('class', 'EmptyMessageBlock')
+                          .attr('transform', 'translate(' + EmptyBlockX + ', 20)');
 
         EMPTYBLOCK
             .append('rect')
@@ -559,7 +514,7 @@ export class NgD3GanttService {
             .attr('stroke', '#ccc')
             .attr('x', 0)
             .attr('width', this.EMPTYBLOCK_WIDTH)
-            .attr('height', this.EMPTYBLOCK_HEIGHT)
+            .attr('height', this.EMPTYBLOCK_HEIGHT);
 
         EMPTYBLOCK
             .append('text')
@@ -569,13 +524,13 @@ export class NgD3GanttService {
             .text('There is no objective yet, please click to add one');
 
 
-        let EMPTYBLOCK_BUTTON = EMPTYBLOCK
+        const EMPTYBLOCK_BUTTON = EMPTYBLOCK
             .append('g')
             .attr('class', 'empty_button')
             .attr('transform', 'translate(' + Math.abs((this.EMPTYBLOCK_WIDTH / 2) - 50) + ', 100)')
             .on('click', function(d) {
                 this.config.onEmptyButtonClick();
-            })
+            });
 
         EMPTYBLOCK_BUTTON
             .append('rect')
@@ -583,32 +538,32 @@ export class NgD3GanttService {
             .attr('height', 35)
             .attr('rx', 4)
             .attr('ry', 4)
-            .attr('fill', this.BUTTON_COLOR)
+            .attr('fill', this.BUTTON_COLOR);
 
         EMPTYBLOCK_BUTTON
             .append('text')
             .attr('fill', '#fff')
             .attr('y', 25)
             .attr('x', 10)
-            .text('Click Here')
+            .text('Click Here');
 
-        let textBlock = EMPTYBLOCK.select('.EmptyMessage');
+        const textBlock = EMPTYBLOCK.select('.EmptyMessage');
 
-        let EmptyMessageWidth = textBlock.node().getComputedTextLength();
-        let EmptyMessageX = Math.abs((this.EMPTYBLOCK_WIDTH / 2) - (EmptyMessageWidth / 2));
+        const EmptyMessageWidth = textBlock.node().getComputedTextLength();
+        const EmptyMessageX = Math.abs((this.EMPTYBLOCK_WIDTH / 2) - (EmptyMessageWidth / 2));
 
         textBlock
             .attr('transform', 'translate(' + EmptyMessageX + ',20)')
     }
 
-    let bars = svg.append('g').attr('transform', 'translate(0, 20)')
+    const bars = svg.append('g').attr('transform', 'translate(0, 20)');
 
-    let Blocks = bars.selectAll('.bar')
+    const Blocks = bars.selectAll('.bar')
         .data(this.data)
         .enter()
         .append('g')
         .attr('class', 'Single--Block cp')
-        .attr('transform', function(d, i) {
+        .attr('transform', (d, i)  => {
             return 'translate(' + x(new Date(d.start_date)) + ',' + 0 + ')';
         })
         .append('rect')
@@ -617,17 +572,17 @@ export class NgD3GanttService {
                 .attr('ry', 5)
                 .attr('height', 60)
                 .attr('x', 0)
-                .attr('y', function(d, i) {
+                .attr('y', (d, i) => {
                     return y(i + 1);
                 })
-                .attr('width', function(d) {
+                .attr('width', d => {
                     return (getActualWidth(d) + 10);
                 });
 
 
     Blocks
         .append('g')
-        .attr('transform', function(d) {
+        .attr('transform', d => {
             if (startsBefore(d) && isVisible(d)) {
                 let position = Math.abs(x(new Date(d.start_date)));
                 return 'translate(' + position + ', 0)';
@@ -635,43 +590,43 @@ export class NgD3GanttService {
                 return 'translate(0, 0)';
             }
         })
-    let title = Blocks.append('text')
+    const title = Blocks.append('text')
           .attr('class', 'Title')
           .attr('x', config.box_padding)
-          .attr('y', function(d, i) {
-              return (y(i + 1) + 20)
+          .attr('y', (d, i) => {
+              return (y(i + 1) + 20);
           })
-          .text(function(d) {
-              return d.title
+          .text( (d) => {
+              return d.title;
           });
 
-    let footer = title.append('g')
-        .attr('transform', function(d, i) {
+    const footer = title.append('g')
+        .attr('transform', (d, i) => {
           let position = config.box_padding;
           if (position < 10) {
               position = 0;
           }
           return 'translate(' + position + ', ' + (y(i + 1) + 45) + ')';
-        })
-    let term = footer.append('text')
+        });
+    const term = footer.append('text')
           .attr('class', 'TermType')
-          .text(function(d) {
-              return d.term
+          .text( (d) => {
+            return d.term;
           })
-          .attr('opacity', function(d) {
-              return Number(getWidth(d) > 80)
+          .attr('opacity', d => {
+            return Number(getWidth(d) > 80);
           });
-    let duration = Blocks
+    const duration = Blocks
       .append('text')
             .attr('class', 'Duration')
             .attr('x', 80)
-            .text(function(d) {
-                return getDuration(d)
+            .text( (d) => {
+                return getDuration(d);
             })
-            .attr('opacity', function(d) {
-                return Number(getWidth(d) > 200)
+            .attr('opacity', d => {
+                return Number(getWidth(d) > 200);
             });
-    let progressBar = Blocks
+    const progressBar = Blocks
       .append('rect')
           .attr('class', 'ProgressBar')
           .attr('fill', '#ddd')
@@ -679,7 +634,7 @@ export class NgD3GanttService {
       .append('rect')
           .attr('class', 'ProgressBar ProgressBar-Fill')
           .attr('fill', 'red')
-          .attr('width', function(d) {
+          .attr('width', d => {
               let width = ((d.completion_percentage * PROGRESSBAR_WIDTH) / 100);
               return width;
           })
@@ -689,13 +644,10 @@ export class NgD3GanttService {
           .attr('y', -7)
           .attr('height', 7)
           .attr('x', 180)
-          .attr('opacity', function(d) {
+          .attr('opacity', d => {
               let width = getWidth(d);
-              return Number(width > PROGRESSBAR_BOUNDARY)
+              return Number(width > PROGRESSBAR_BOUNDARY);
           });
-
-
-      //.call(appendProgressBar)
 
 
 
