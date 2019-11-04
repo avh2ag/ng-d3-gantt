@@ -124,6 +124,41 @@
           }
         }
       }
+    },
+    "ng-d3-gantt": {
+      "projectType": "library",
+      "root": "projects/ng-d3-gantt",
+      "sourceRoot": "projects/ng-d3-gantt/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-ng-packagr:build",
+          "options": {
+            "tsConfig": "projects/ng-d3-gantt/tsconfig.lib.json",
+            "project": "projects/ng-d3-gantt/ng-package.json"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/ng-d3-gantt/src/test.ts",
+            "tsConfig": "projects/ng-d3-gantt/tsconfig.spec.json",
+            "karmaConfig": "projects/ng-d3-gantt/karma.conf.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/ng-d3-gantt/tsconfig.lib.json",
+              "projects/ng-d3-gantt/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
     }},
   "defaultProject": "d3-gantt"
 }

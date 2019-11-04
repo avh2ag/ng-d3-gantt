@@ -17,7 +17,15 @@
     "lib": [
       "es2018",
       "dom"
-    ]
+    ],
+    "paths": {
+      "ng-d3-gantt": [
+        "dist/ng-d3-gantt"
+      ],
+      "ng-d3-gantt/*": [
+        "dist/ng-d3-gantt/*"
+      ]
+    }
   },
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true,
