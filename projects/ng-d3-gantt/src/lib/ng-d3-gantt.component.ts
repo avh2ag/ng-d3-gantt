@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, AfterViewInit, HostListener } from '@angular/core';
 import { NgD3GanttService } from './ng-d3-gantt.service';
-import { IGanttConfig } from './ng-d3-gantt.interface';
+import { IGanttConfig, IGanttData } from './ng-d3-gantt.interface';
 
 @Component({
   // tslint:disable-next-line: component-selector
@@ -14,7 +14,7 @@ import { IGanttConfig } from './ng-d3-gantt.interface';
 })
 export class NgD3GanttComponent implements OnInit, AfterViewInit {
   @Input() chartElementId = 'ng-d3-gantt-chart';
-  @Input() data = [];
+  @Input() data: Array<IGanttData> = [];
   @Input() config: IGanttConfig;
   constructor(private ganttService: NgD3GanttService) { }
 

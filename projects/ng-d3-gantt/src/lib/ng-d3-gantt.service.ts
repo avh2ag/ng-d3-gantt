@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as d3 from 'd3';
-import { IGanttConfig } from './ng-d3-gantt.interface';
+import { IGanttConfig, IGanttData } from './ng-d3-gantt.interface';
 import * as moment_ from 'moment';
 const moment = moment_;
 // tslint:disable: no-shadowed-variable
@@ -9,7 +9,7 @@ const moment = moment_;
 })
 export class NgD3GanttService {
   public config: IGanttConfig;
-  public data: Array<any>; // come back to this
+  public data: Array<IGanttData>; // come back to this
   private ELEMENT: any;
   private CHART_WIDTH: number;
   private CHART_HEIGHT: number;
@@ -41,6 +41,10 @@ export class NgD3GanttService {
     };
     // call draw
     this.draw('initial');
+  }
+
+  private getSubtitleOffset() {
+    // find longest
   }
 
   private goToNext() {
@@ -573,7 +577,7 @@ export class NgD3GanttService {
                 });
 
 
-    const blockDrawArea = Blocks
+    const blockContent = Blocks
         .append('g')
         .attr('class', 'node-draw-area')
         .attr('transform', (d, i) => {
@@ -585,7 +589,7 @@ export class NgD3GanttService {
                 return 'translate(0, 0)';
             }
         });
-    const title = blockDrawArea.append('text')
+    const title = blockContent.append('text')
           .attr('class', 'Title')
           .attr('x', this.config.box_padding)
           .attr('y', (d, i) => {
@@ -595,7 +599,7 @@ export class NgD3GanttService {
               return d.title;
           });
 
-    const footer = blockDrawArea.append('g')
+    const footer = blockContent.append('g')
         .attr('transform', (d, i) => {
           let position = this.config.box_padding;
           if (position < 10) {
@@ -603,41 +607,48 @@ export class NgD3GanttService {
           }
           return 'translate(' + position + ', ' + (y(i + 1) + 45) + ')';
         });
-    const term = footer.append('text')
+    const durationOffset = 100;
+    const subtitle = footer.append('text')
           .attr('class', 'TermType')
           .text( (d) => {
-            return d.term;
+            return d.subtitle;
           })
           .attr('opacity', d => {
-            return Number(getWidth(d) > 80);
+            return Number(getWidth(d) > durationOffset);
           });
     const duration = footer
       .append('text')
             .attr('class', 'Duration')
-            .attr('x', 80)
+            .attr('x', durationOffset)
             .text( (d) => {
                 return getDuration(d);
             })
             .attr('opacity', d => {
                 return Number(getWidth(d) > 200);
             });
-    const progressBar = blockDrawArea
+    const progressBar = footer
       .append('rect')
           .attr('class', 'ProgressBar')
           .attr('fill', '#ddd')
-          .attr('width', this.PROGRESSBAR_WIDTH);
-    const progressBarFill = blockDrawArea.append('rect')
+          .attr('width', d => {
+            return d.completion_percentage === undefined ? 0 : this.PROGRESSBAR_WIDTH;
+          });
+    const progressBarFill = footer.append('rect')
           .attr('class', 'ProgressBar ProgressBar-Fill')
           .attr('fill', 'red')
           .attr('width', d => {
-              return ((d.completion_percentage * this.PROGRESSBAR_WIDTH) / 100);
-          })
-          .selectAll('.ProgressBar')
+              if (d.completion_percentage === undefined) {
+                return 0;
+              } else {
+                return ((d.completion_percentage * this.PROGRESSBAR_WIDTH) / 100);
+              }
+          });
+    footer.selectAll('.ProgressBar')
               .attr('rx', 5)
               .attr('ry', 5)
               .attr('y', -7)
               .attr('height', 7)
-              .attr('x', 180)
+              .attr('x', durationOffset + 100)
               .attr('opacity', d => {
                   const width = getWidth(d);
                   return Number(width > this.PROGRESSBAR_BOUNDARY);
@@ -663,14 +674,14 @@ export class NgD3GanttService {
             Blocks.selectAll('.Single--Node')
                 .attr('width', b => {
                     if (d.id === b.id) {
-                        if (startsBefore(d) || endsAfter(d)) {
-                            if (getWidth(b) < 500) {
-                                return (getActualWidth(b) + (500 - getWidth(b)) + 10);
-                            }
-                        }
-                        return ((d3.max([getActualWidth(b), 500])) + 10);
+                      if (startsBefore(d) || endsAfter(d)) {
+                          if (getWidth(b) < 500) {
+                            return (getActualWidth(b) + (500 - getWidth(b)) + 10);
+                          }
+                      }
+                      return ((d3.max([getActualWidth(b), 500])) + 10);
                     } else {
-                        return getActualWidth(b);
+                      return getActualWidth(b);
                     }
                 });
 

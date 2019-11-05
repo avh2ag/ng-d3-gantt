@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { IGanttData } from 'ng-d3-gantt';
 
 @Component({
   selector: 'app-root',
@@ -7,15 +8,14 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'd3-gantt';
-  public data = [
+  public data: Array<IGanttData> = [
     {
       id: 1,
       title: 'Step 1',
       start_date: '08/08/2016',
       end_date: '03/09/2017',
-      value: 67,
-      term: 'Short Term', // lets change this to something akin to subtitle
-      completion_percentage: 29,
+      subtitle: 'Short subtitle', // lets change this to something akin to subtitle
+      // completion_percentage: 29,
       color: '#770051',
     },
     {
@@ -23,8 +23,7 @@ export class AppComponent {
       title: 'Step 2',
       start_date: '11/01/2017',
       end_date: '03/09/2018',
-      value: 67,
-      term: 'Short Term',
+      subtitle: 'Short subtitle',
       completion_percentage: 29,
       color: '#05f20c',
     },
@@ -33,8 +32,7 @@ export class AppComponent {
       title: 'Step 3',
       start_date: '04/15/2017',
       end_date: '06/14/2017',
-      value: 67,
-      term: 'Short Term',
+      subtitle: 'Short subtitle',
       completion_percentage: 29,
       color: '#914ae1',
     },
@@ -43,8 +41,7 @@ export class AppComponent {
       title: 'Step 4',
       start_date: '06/11/2017',
       end_date: '08/30/2017',
-      value: 67,
-      term: 'Short Term',
+      subtitle: 'Short subtitle',
       completion_percentage: 29,
       color: '#b79d3b',
     },
@@ -53,8 +50,7 @@ export class AppComponent {
       title: 'Step 5',
       start_date: '07/31/2017',
       end_date: '12/09/2017',
-      value: 67,
-      term: 'Short Term',
+      subtitle: 'Short subtitle',
       completion_percentage: 29,
       color: '#423db6',
     }

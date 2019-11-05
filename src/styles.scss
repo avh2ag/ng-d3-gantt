@@ -42,26 +42,26 @@ body {
   stroke-width: 1;
 }
 
-.gantt-wrapper{
-      display: flex;
-    flex-direction: column;
+.gantt-wrapper {
+  display: flex;
+  flex-direction: column;
   border: 1px solid #767676;
-    border-radius: 5px 5px 0px 0px;
-    height: 100vh;
+  border-radius: 5px 5px 0px 0px;
+  height: 100vh;
 }
 
-.chart{
-    overflow: auto;
+.chart {
+  overflow: auto;
 }
 
-.gantt-top{
+.gantt-top {
   display: flex;
   justify-content: space-around;
   align-items: center;
   height: 150px;
 }
 
-.range-select p{
+.range-select p {
   margin-left: 20px;
 }
 

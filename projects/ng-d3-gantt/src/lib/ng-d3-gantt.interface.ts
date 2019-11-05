@@ -22,3 +22,14 @@ export interface IGanttCycle {
   start_date: string;
   end_date: string;
 }
+
+export interface IGanttData {
+  id: number;
+  title: string;
+  subtitle: string;
+  start_date: string;
+  end_date: string;
+  color: string;
+  completion_percentage?: number;
+  extras?: any;
+}
