@@ -6,8 +6,9 @@ import { IGanttConfig, IGanttData } from './ng-d3-gantt.interface';
   // tslint:disable-next-line: component-selector
   selector: 'ng-d3-gantt',
   template: `
+    <button (click)="goToPrevious()">Previous</button>
+    <button (click)="goToNext()">Next</button>
     <div [id]="chartElementId">
-      ng-d3-gantt works!
     </div>
   `,
   styles: [],
@@ -27,6 +28,14 @@ export class NgD3GanttComponent implements OnInit, AfterViewInit {
   @HostListener('window:resize', ['$event'])
   onResize(event) {
     this.drawChart();
+  }
+
+  public goToPrevious() {
+    this.ganttService.goToPrevious();
+  }
+
+  public goToNext() {
+    this.ganttService.goToNext();
   }
 
   private drawChart() {

@@ -11,10 +11,10 @@ export class AppComponent {
   public data: Array<IGanttData> = [
     {
       id: 1,
-      title: 'Step 1',
+      title: 'Step 1 title that runneth over and over and over and over and over',
       start_date: '08/08/2016',
       end_date: '03/09/2017',
-      subtitle: 'Short subtitle', // lets change this to something akin to subtitle
+      subtitle: 'Short subtitle',
       // completion_percentage: 29,
       color: '#770051',
     },

@@ -65,10 +65,15 @@ export class NgD3GanttService {
     this.CHART_HEIGHT = d3.max([((data.length * 80) + 100), 300]);
 
     // call draw
+    this.clearChart();
     this.draw('initial');
   }
 
-  private goToNext() {
+  private clearChart() {
+    d3.selectAll(`${this.config.element} div`).remove();
+  }
+
+  public goToNext() {
     switch (this.config.metrics.type) {
         case 'yearly':
             this.config.metrics.year = this.config.metrics.year + 1;
@@ -92,11 +97,11 @@ export class NgD3GanttService {
             }
             break;
     }
-
+    this.clearChart(); // need to input chartId
     this.draw('next');
   }
 
-  private goToPrevious() {
+  public goToPrevious() {
     switch (this.config.metrics.type) {
         case 'yearly':
             this.config.metrics.year = this.config.metrics.year - 1;
@@ -122,11 +127,24 @@ export class NgD3GanttService {
             }
             break;
     }
+    this.clearChart(); // need to input chartId
     this.draw('previous');
   }
 
   private draw(state) {
+    // clear element previously
+
     /* Inline functions from initial implementation */
+    function hoistedTrimTitle(d: IGanttData, i: number) {
+      const padding = 10;
+      const width = getWidth(d) + padding;
+      trimTitle(width, this, padding);
+    }
+    function hoistedExpandedTitle(d: IGanttData, i: number) {
+      const padding = 10;
+      const width = Math.max(getWidth(d), 500) + padding;
+      trimTitle(width, this, padding);
+    }
     const getWidth = (node: IGanttData) => {
       if (endsAfter(node)) {
           width = Math.abs(x(new Date(this.dateBoundary[1])) - x(new Date(node.start_date)));
@@ -157,22 +175,22 @@ export class NgD3GanttService {
     };
 
     const getDaysRange = (months) => {
-        const ranges: Array<IGanttCycle> = [];
-        months.map((month) => {
-            const startOfMonth = moment(month, 'MMM YYYY').startOf('month');
-            const endOfMonth = moment(month, 'MMM YYYY').endOf('month');
-            let day = startOfMonth;
+      const ranges: Array<IGanttCycle> = [];
+      months.map((month) => {
+          const startOfMonth = moment(month, 'MMM YYYY').startOf('month');
+          const endOfMonth = moment(month, 'MMM YYYY').endOf('month');
+          let day = startOfMonth;
 
-            while (day <= endOfMonth) {
-                ranges.push({
-                    name: moment(day).format('DD'),
-                    start_date: day.toDate(),
-                    end_date: day.clone().add(1, 'd').toDate(),
-                });
-                day = day.clone().add(1, 'd');
-            }
+          while (day <= endOfMonth) {
+              ranges.push({
+                  name: moment(day).format('DD'),
+                  start_date: day.toDate(),
+                  end_date: day.clone().add(1, 'd').toDate(),
+              });
+              day = day.clone().add(1, 'd');
+          }
         });
-        return ranges;
+      return ranges;
     };
 
     const getMonthsRange = (months) => {
@@ -214,8 +232,6 @@ export class NgD3GanttService {
     let subheaderRanges: Array<IGanttCycle> = [];
     let months = [];
     let headerRanges = [];
-
-    d3.select(this.config.element)._groups[0][0].innerHTML = '';
 
     if (this.config.metrics.type === 'monthly') {
         months = [this.config.metrics.month];
@@ -326,6 +342,7 @@ export class NgD3GanttService {
           break;
 
       case 'previous':
+          console.log('we got here');
           secondSection
               .attr('transform', 'translate( -1000, 0)')
               .transition()
@@ -402,23 +419,14 @@ export class NgD3GanttService {
         .attr('width', (width) / clickableAreaDivisor)
         .attr('class', 'navigation navigation-left')
         .attr('height', height)
-        .attr('fill', 'transparent')
-        .on('click', () => {
-            this.goToPrevious();
-            this.config.onAreaClick('left');
-        });
+        .attr('fill', 'transparent');
 
     const rightClickableArea = DRAWAREA.append('rect')
       .attr('class', 'navigation navigation-right')
       .attr('width', (width) / clickableAreaDivisor)
       .attr('transform', 'translate(' + ((width) / clickableAreaDivisor * 2) + ' ,0)')
       .attr('height', height)
-      .attr('fill', 'transparent')
-      .on('click', () => {
-          this.goToNext();
-          this.config.onAreaClick('right');
-      });
-
+      .attr('fill', 'transparent');
 
     firstSection.selectAll('.bar')
         .data(headerRanges)
@@ -654,7 +662,7 @@ export class NgD3GanttService {
                   const width = getWidth(d);
                   return Number(width > this.PROGRESSBAR_BOUNDARY);
               });
-    blockArea
+    blockContent
         .on('click', d => {
             this.config.onClick(d);
         })
@@ -716,61 +724,48 @@ export class NgD3GanttService {
                     }
                 });
 
-            blockContent.selectAll('.Title')
-                .text( d => d.title );
+            blockContent.filter((entry: IGanttData, i) => {
+              return entry.id === d.id;
+            })
+            .selectAll('.Title')
+            .text( d => d.title );
+            blockContent.each( hoistedExpandedTitle );
+        })
+        .on('mouseout', (d, i) => {
+            Blocks.selectAll('.Single--Block')
+                .style('opacity', 1);
+            Blocks.selectAll('.start-lines, .end-lines')
+                .style('stroke-width', 1)
+                .style('opacity', 1);
 
-            // blockArea.each( (d, i) => {
-            //     const width = ((d3.max([getWidth(d), 500])) + 10);
-            //     // trimTitle(width, this, this.config.box_padding * 2);
-            // });
-            blockContent.each( hoistedTrimTitle );
+            Blocks.selectAll('.Single--Node')
+                .attr('width', b => {
+                    return (getActualWidth(b) + 10);
+                });
+
+            Blocks.selectAll('.ProgressBar')
+                .attr('opacity', b => {
+                    return Number(getWidth(b) > this.PROGRESSBAR_BOUNDARY);
+                });
+
+            Blocks.selectAll('.Duration')
+                .attr('opacity', b => {
+                    return Number(getWidth(b) > 200);
+                });
+
+            Blocks.selectAll('.TermType')
+                .attr('opacity', b => {
+                    return Number(getWidth(b) > 80);
+                });
+            secondSection.selectAll('.Date')
+                .style('fill', '');
+            secondSection.selectAll('.Date-Block')
+                .style('fill', '');
+
+            blockContent.filter((entry: IGanttData, i) => {
+              return entry.id === d.id;
+            }).each(hoistedTrimTitle);
         });
-    function hoistedTrimTitle(d: IGanttData, i: number) {
-      const width = ((d3.max([getWidth(d), 500])) + 10);
-      trimTitle(width, this, 10);
-    }
-    //     .on('mouseout', (d, i) => {
-    //         svg.selectAll('.Single--Block')
-    //             .style('opacity', 1);
-    //         svg.selectAll('.start-lines, .end-lines')
-    //             .style('stroke-width', 1)
-    //             .style('opacity', 1);
-
-    //         svg.selectAll('.Single--Node')
-    //             .attr('width', b => {
-    //                 return (getActualWidth(b) + 10);
-    //             });
-
-    //         svg.selectAll('.ProgressBar')
-    //             .attr('opacity', b => {
-    //                 return Number(getWidth(b) > this.PROGRESSBAR_BOUNDARY);
-    //             });
-
-    //         svg.selectAll('.Duration')
-    //             .attr('opacity', b => {
-    //                 return Number(getWidth(b) > 200);
-    //             });
-
-    //         svg.selectAll('.TermType')
-    //             .attr('opacity', b => {
-    //                 return Number(getWidth(b) > 80);
-    //             });
-    //         secondSection.selectAll('.Date')
-    //             .style('fill', '');
-    //         secondSection.selectAll('.Date-Block')
-    //             .style('fill', '');
-
-    //         console.log(this);
-    //         d3.select(this).each( (d, i) => {
-    //             const width = getWidth(d);
-    //             trimTitle(width, this, this.config.box_padding * 2);
-    //         });
-    //     })
-        // .each( (d, i) => {
-        //     console.log(d, i);
-        //     const width = getWidth(d);
-        //     trimTitle(width, this, this.config.box_padding * 2);
-        // });
-
+    blockContent.each(hoistedTrimTitle);
   }
 }
