@@ -97,7 +97,7 @@ export class AppComponent {
     // metrics: {type: 'monthly', month: 'March 2017'}, // For Monthly Data
     // metrics: {type: 'quarterly', months: ['January 2017', 'February 2017', 'March 2017']}, // For quarterly or half yearly data
     onClick: (data) => {
-      alert(JSON.stringify(data)); // Onclick of each node
+      console.log('onClick called on ', data );
     },
     onEmptyButtonClick: () => {
       console.log('Empty Clicked');

@@ -13,7 +13,7 @@ import { IGanttConfig } from './ng-d3-gantt.interface';
   styles: [],
 })
 export class NgD3GanttComponent implements OnInit, AfterViewInit {
-  @Input() chartElementId = 'ng-gantt-chart';
+  @Input() chartElementId = 'ng-d3-gantt-chart';
   @Input() data = [];
   @Input() config: IGanttConfig;
   constructor(private ganttService: NgD3GanttService) { }

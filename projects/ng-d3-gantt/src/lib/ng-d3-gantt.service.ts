@@ -101,29 +101,22 @@ export class NgD3GanttService {
   }
   private  draw(state) {
     /* Inline functions from initial implementation */
-    // copy over for handling changes
-    const config = this.config;
-    const data = this.data;
-    const PROGRESSBAR_WIDTH = this.PROGRESSBAR_WIDTH;
-    const PROGRESSBAR_BOUNDARY = this.PROGRESSBAR_BOUNDARY;
-
 
     function getDuration(d) {
-        const startDate = moment(d.start_date, 'MM/DD/YYYY').format('DD MMM');
-        const endDate = moment(d.end_date, 'MM/DD/YYYY').format('DD MMM');
-        return startDate + ' - ' + endDate;
+      const startDate = moment(d.start_date, 'MM/DD/YYYY').format('DD MMM');
+      const endDate = moment(d.end_date, 'MM/DD/YYYY').format('DD MMM');
+      return startDate + ' - ' + endDate;
     }
 
     const trimTitle = (width, node, padding) => {
-        console.log(width, node, padding);
-        const textBlock = d3.select(node).select('.Title');
-        let textLength = textBlock.node().getComputedTextLength();
-        let text = textBlock.text();
-        while (textLength > (width - padding) && text.length > 0) {
-            text = text.slice(0, -1);
-            textBlock.text(text + '...');
-            textLength = textBlock.node().getComputedTextLength();
-        }
+      const textBlock = d3.select(node).select('.Title');
+      let textLength = textBlock.node().getComputedTextLength();
+      let text = textBlock.text();
+      while (textLength > (width - padding) && text.length > 0) {
+          text = text.slice(0, -1);
+          textBlock.text(text + '...');
+          textLength = textBlock.node().getComputedTextLength();
+      }
     };
 
     const getWidth = (node) => {
@@ -352,7 +345,7 @@ export class NgD3GanttService {
         .append('g')
         .attr('transform', 'translate(' + margin.left + ',' + 0 + ')')
         .selectAll('.start-lines')
-          .data(data)
+          .data(this.data)
           .enter()
           .append('line')
           .attr('class', 'start-lines')
@@ -371,7 +364,7 @@ export class NgD3GanttService {
           });
     const endLines = DRAWAREA
       .selectAll('.end-lines')
-      .data(data)
+      .data(this.data)
       .enter()
       .append('line')
       .attr('stroke', (d) => {
@@ -599,13 +592,12 @@ export class NgD3GanttService {
               return (y(i + 1) + 20);
           })
           .text( (d) => {
-              console.log(d);
               return d.title;
           });
 
     const footer = blockDrawArea.append('g')
         .attr('transform', (d, i) => {
-          let position = config.box_padding;
+          let position = this.config.box_padding;
           if (position < 10) {
               position = 0;
           }
@@ -629,98 +621,97 @@ export class NgD3GanttService {
             .attr('opacity', d => {
                 return Number(getWidth(d) > 200);
             });
-    const progressBar = footer
+    const progressBar = blockDrawArea
       .append('rect')
           .attr('class', 'ProgressBar')
           .attr('fill', '#ddd')
-          .attr('width', PROGRESSBAR_WIDTH)
-      .append('rect')
+          .attr('width', this.PROGRESSBAR_WIDTH);
+    const progressBarFill = blockDrawArea.append('rect')
           .attr('class', 'ProgressBar ProgressBar-Fill')
           .attr('fill', 'red')
           .attr('width', d => {
-              return ((d.completion_percentage * PROGRESSBAR_WIDTH) / 100);
+              return ((d.completion_percentage * this.PROGRESSBAR_WIDTH) / 100);
           })
-      .selectAll('.ProgressBar')
-          .attr('rx', 5)
-          .attr('ry', 5)
-          .attr('y', -7)
-          .attr('height', 7)
-          .attr('x', 180)
-          .attr('opacity', d => {
-              const width = getWidth(d);
-              return Number(width > PROGRESSBAR_BOUNDARY);
-          });
-    const blockNodes = Blocks.nodes();
-    // Blocks
-    //     .on('click', function(d) {
-    //         this.config.onClick(d);
-    //     })
-    //     .on('mouseover', function(d, i) {
-    //         svg.selectAll('.Single--Block')
-    //             .style('opacity', (b, i) => {
-    //                 return (d.id === b.id) ? 1 : 0.3;
-    //             });
+          .selectAll('.ProgressBar')
+              .attr('rx', 5)
+              .attr('ry', 5)
+              .attr('y', -7)
+              .attr('height', 7)
+              .attr('x', 180)
+              .attr('opacity', d => {
+                  const width = getWidth(d);
+                  return Number(width > this.PROGRESSBAR_BOUNDARY);
+              });
+    blockArea
+        .on('click', d => {
+            this.config.onClick(d);
+        })
+        .on('mouseover', (d, i) => {
+            Blocks.selectAll('.Single--Block')
+                .style('opacity', (b, i) => {
+                    return (d.id === b.id) ? 1 : 0.3;
+                });
 
-    //         svg.selectAll('.start-lines, .end-lines')
-    //             .style('stroke-width', (b, i) => {
-    //                 return (d.id === b.id) ? 3 : 1;
-    //             })
-    //             .style('opacity', (b, i) => {
-    //                 return Number(d.id === b.id);
-    //             });
+            Blocks.selectAll('.start-lines, .end-lines')
+                .style('stroke-width', (b, i) => {
+                    return (d.id === b.id) ? 3 : 1;
+                })
+                .style('opacity', (b, i) => {
+                    return Number(d.id === b.id);
+                });
 
-    //         svg.selectAll('.Single--Node')
-    //             .attr('width', b => {
-    //                 if (d.id === b.id) {
-    //                     if (startsBefore(d) || endsAfter(d)) {
-    //                         if (getWidth(b) < 500) {
-    //                             return (getActualWidth(b) + (500 - getWidth(b)) + 10);
-    //                         }
-    //                     }
-    //                     return ((d3.max([getActualWidth(b), 500])) + 10);
-    //                 } else {
-    //                     return getActualWidth(b);
-    //                 }
-    //             });
+            Blocks.selectAll('.Single--Node')
+                .attr('width', b => {
+                    if (d.id === b.id) {
+                        if (startsBefore(d) || endsAfter(d)) {
+                            if (getWidth(b) < 500) {
+                                return (getActualWidth(b) + (500 - getWidth(b)) + 10);
+                            }
+                        }
+                        return ((d3.max([getActualWidth(b), 500])) + 10);
+                    } else {
+                        return getActualWidth(b);
+                    }
+                });
 
-    //         svg.selectAll('.ProgressBar')
-    //             .attr('opacity', b => {
-    //               return Number(d.id === b.id || getWidth(b) > 480);
-    //             });
+            Blocks.selectAll('.ProgressBar')
+                .attr('opacity', b => {
+                  return Number(d.id === b.id || getWidth(b) > 480);
+                });
 
-    //         svg.selectAll('.Duration')
-    //             .attr('opacity', b => {
-    //                 return Number(d.id === b.id || getWidth(b) > 200);
-    //             });
+            Blocks.selectAll('.Duration')
+                .attr('opacity', b => {
+                    return Number(d.id === b.id || getWidth(b) > 200);
+                });
 
-    //         svg.selectAll('.TermType')
-    //             .attr('opacity', (b) => {
-    //                 return Number(d.id === b.id || getWidth(b) > 80);
-    //             });
+            Blocks.selectAll('.TermType')
+                .attr('opacity', (b) => {
+                    return Number(d.id === b.id || getWidth(b) > 80);
+                });
 
-    //         secondSection.selectAll('.Date')
-    //             .style('fill', (b, i) => {
-    //                 if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
-    //                 || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
-    //                   return '#4894ff';
-    //                 }
-    //             });
-    //         secondSection.selectAll('.Date-Block')
-    //             .style('fill', (b, i) => {
-    //                 if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
-    //                 || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
-    //                   return '#f0f6f9';
-    //                 }
-    //             });
+            secondSection.selectAll('.Date')
+                .style('fill', (b, i) => {
+                    if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
+                    || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
+                      return '#4894ff';
+                    }
+                });
+            secondSection.selectAll('.Date-Block')
+                .style('fill', (b, i) => {
+                    if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
+                    || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
+                      return '#f0f6f9';
+                    }
+                });
 
-    //         d3.select(this).selectAll('.Title')
-    //             .text( d => d.title );
+            d3.select(this).selectAll('.Title')
+                .text( d => d.title );
 
-    //         d3.select(this).each( (d, i) => {
-    //             const width = ((d3.max([getWidth(d), 500])) + 10);
-    //             trimTitle(width, this, config.box_padding * 2);
-    //         });
-    //     })
+            d3.select(this).each( (d, i) => {
+                const width = ((d3.max([getWidth(d), 500])) + 10);
+                trimTitle(width, this, this.config.box_padding * 2);
+            });
+        });
     //     .on('mouseout', (d, i) => {
     //         svg.selectAll('.Single--Block')
     //             .style('opacity', 1);
