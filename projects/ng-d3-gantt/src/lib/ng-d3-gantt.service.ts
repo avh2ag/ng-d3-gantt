@@ -115,6 +115,7 @@ export class NgD3GanttService {
     }
 
     const trimTitle = (width, node, padding) => {
+        console.log(width, node, padding);
         const textBlock = d3.select(node).select('.Title');
         let textLength = textBlock.node().getComputedTextLength();
         let text = textBlock.text();
@@ -368,7 +369,7 @@ export class NgD3GanttService {
           .attr('y2', (d, i) => {
               return (y(i + 1) + 20);
           })
-        .selectAll('.end-lines')
+    DRAWAREA.selectAll('.end-lines')
           .data(data)
           .enter()
           .append('line')
@@ -388,9 +389,9 @@ export class NgD3GanttService {
           });
 
 
-    const lines = svg.append('g').attr('transform', 'translate(0,0)');
+    const lines = DRAWAREA.append('g').attr('transform', 'translate(0,0)');
 
-    const currentDayArea = svg.append('line')
+    const currentDayArea = DRAWAREA.append('line')
         .attr('width', getActualWidth(this.currentDay))
         .attr('class', 'CurrentDay-Area')
         .attr('x1', x(new Date(this.currentDay.start_date)))
@@ -399,7 +400,7 @@ export class NgD3GanttService {
         .attr('y2', height);
 
 
-    const leftClickableArea = svg.append('rect')
+    const leftClickableArea = DRAWAREA.append('rect')
         .attr('width', (width) / 2)
         .attr('height', height)
         .attr('fill', 'transparent')
@@ -408,7 +409,7 @@ export class NgD3GanttService {
             this.config.onAreaClick('left');
         });
 
-    const rightClickableArea = svg.append('rect')
+    const rightClickableArea = DRAWAREA.append('rect')
         .attr('width', (width) / 2)
         .attr('transform', 'translate(' + ((width) / 2) + ' ,0)')
         .attr('height', height)
@@ -551,7 +552,7 @@ export class NgD3GanttService {
             .attr('transform', 'translate(' + EmptyMessageX + ',20)');
     }
 
-    const bars = svg.append('g').attr('transform', 'translate(0, 20)');
+    const bars = DRAWAREA.append('g').attr('transform', 'translate(0, 20)');
 
     const Blocks = bars.selectAll('.bar')
         .data(this.data)
@@ -560,7 +561,8 @@ export class NgD3GanttService {
         .attr('class', 'Single--Block cp')
         .attr('transform', (d, i)  => {
             return 'translate(' + x(new Date(d.start_date)) + ',' + 0 + ')';
-        })
+        });
+    const blockArea = Blocks
         .append('rect')
                 .attr('class', 'Single--Node')
                 .attr('rx', 5)
@@ -575,17 +577,19 @@ export class NgD3GanttService {
                 });
 
 
-    Blocks
+    const blockDrawArea = Blocks
         .append('g')
-        .attr('transform', d => {
+        .attr('class', 'node-draw-area')
+        .attr('transform', (d, i) => {
             if (startsBefore(d) && isVisible(d)) {
-                const position = Math.abs(x(new Date(d.start_date)));
-                return 'translate(' + position + ', 0)';
+                const positionX = Math.abs(x(new Date(d.start_date)));
+                const positionY = Math.abs(y(i + 1));
+                return `translate(${positionX}, ${positionY})`;
             } else {
                 return 'translate(0, 0)';
             }
         });
-    const title = Blocks.append('text')
+    const title = blockDrawArea.append('text')
           .attr('class', 'Title')
           .attr('x', config.box_padding)
           .attr('y', (d, i) => {
@@ -595,7 +599,7 @@ export class NgD3GanttService {
               return d.title;
           });
 
-    const footer = title.append('g')
+    const footer = blockDrawArea.append('g')
         .attr('transform', (d, i) => {
           let position = config.box_padding;
           if (position < 10) {
@@ -611,7 +615,7 @@ export class NgD3GanttService {
           .attr('opacity', d => {
             return Number(getWidth(d) > 80);
           });
-    const duration = Blocks
+    const duration = footer
       .append('text')
             .attr('class', 'Duration')
             .attr('x', 80)
@@ -642,7 +646,8 @@ export class NgD3GanttService {
               const width = getWidth(d);
               return Number(width > PROGRESSBAR_BOUNDARY);
           });
-
+    const blockNodes = Blocks.nodes();
+    console.log(Blocks, blockNodes);
     Blocks
         .on('click', function(d) {
             this.config.onClick(d);
@@ -744,15 +749,17 @@ export class NgD3GanttService {
             secondSection.selectAll('.Date-Block')
                 .style('fill', '');
 
+            console.log(this);
             d3.select(this).each( (d, i) => {
                 const width = getWidth(d);
-                trimTitle(width, this, config.box_padding * 2);
+                trimTitle(width, this, this.config.box_padding * 2);
             });
         })
-        .each( (d, i) => {
-            const width = getWidth(d);
-            trimTitle(width, this, config.box_padding * 2);
-        });
+        // .each( (d, i) => {
+        //     console.log(d, i);
+        //     const width = getWidth(d);
+        //     trimTitle(width, this, this.config.box_padding * 2);
+        // });
 
   }
 }
