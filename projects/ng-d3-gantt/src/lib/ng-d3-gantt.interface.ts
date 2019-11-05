@@ -17,10 +17,10 @@ export interface IGanttMetrics {
 }
 
 export interface IGanttCycle {
-  id: number;
+  id?: number;
   name: string;
-  start_date: string;
-  end_date: string;
+  start_date: string | Date;
+  end_date: string | Date;
 }
 
 export interface IGanttData {

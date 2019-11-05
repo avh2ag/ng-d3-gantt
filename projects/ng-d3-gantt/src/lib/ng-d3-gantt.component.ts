@@ -18,9 +18,7 @@ export class NgD3GanttComponent implements OnInit, AfterViewInit {
   @Input() config: IGanttConfig;
   constructor(private ganttService: NgD3GanttService) { }
 
-  ngOnInit() {
-
-  }
+  ngOnInit() {}
 
   ngAfterViewInit() {
     this.drawChart();
