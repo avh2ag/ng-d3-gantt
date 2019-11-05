@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, AfterViewInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, Input, AfterViewInit, HostListener } from '@angular/core';
 import { NgD3GanttService } from './ng-d3-gantt.service';
 import { IGanttConfig } from './ng-d3-gantt.interface';
 
@@ -23,6 +23,15 @@ export class NgD3GanttComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
+    this.drawChart();
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize(event) {
+    this.drawChart();
+  }
+
+  private drawChart() {
     this.ganttService.ganttChart(this.data, this.config);
   }
 

@@ -348,7 +348,7 @@ export class NgD3GanttService {
         .attr('width', width + margin.left + margin.right)
         .attr('height', height + margin.top + margin.bottom);
 
-    const svg = DRAWAREA
+    const startLines = DRAWAREA
         .append('g')
         .attr('transform', 'translate(' + margin.left + ',' + 0 + ')')
         .selectAll('.start-lines')
@@ -368,40 +368,42 @@ export class NgD3GanttService {
           .attr('y1', 0)
           .attr('y2', (d, i) => {
               return (y(i + 1) + 20);
-          })
-    DRAWAREA.selectAll('.end-lines')
-          .data(data)
-          .enter()
-          .append('line')
-          .attr('stroke', (d) => {
-              return d.color;
-          })
-          .attr('class', 'end-lines')
-          .attr('x1', (d) => {
-              return x(new Date(d.end_date)) + 5;
-          })
-          .attr('x2', (d) => {
-              return x(new Date(d.end_date)) + 5;
-          })
-          .attr('y1', 0)
-          .attr('y2', (d, i) => {
-              return (y(i + 1) + 20);
           });
-
+    const endLines = DRAWAREA
+      .selectAll('.end-lines')
+      .data(data)
+      .enter()
+      .append('line')
+      .attr('stroke', (d) => {
+          return d.color;
+      })
+      .attr('class', 'end-lines')
+      .attr('x1', (d) => {
+          return x(new Date(d.end_date)) + 5;
+      })
+      .attr('x2', (d) => {
+          return x(new Date(d.end_date)) + 5;
+      })
+      .attr('y1', 0)
+      .attr('y2', (d, i) => {
+          return (y(i + 1) + 20);
+      });
 
     const lines = DRAWAREA.append('g').attr('transform', 'translate(0,0)');
 
-    const currentDayArea = DRAWAREA.append('line')
-        .attr('width', getActualWidth(this.currentDay))
-        .attr('class', 'CurrentDay-Area')
-        .attr('x1', x(new Date(this.currentDay.start_date)))
-        .attr('x2', x(new Date(this.currentDay.start_date)))
-        .attr('y1', 0)
-        .attr('y2', height);
+    const currentDayArea = DRAWAREA
+      .append('line')
+      .attr('width', getActualWidth(this.currentDay))
+      .attr('class', 'CurrentDay-Area')
+      .attr('x1', x(new Date(this.currentDay.start_date)))
+      .attr('x2', x(new Date(this.currentDay.start_date)))
+      .attr('y1', 0)
+      .attr('y2', height);
 
-
+    const clickableAreaDivisor = 3;
     const leftClickableArea = DRAWAREA.append('rect')
-        .attr('width', (width) / 2)
+        .attr('width', (width) / clickableAreaDivisor)
+        .attr('class', 'navigation navigation-left')
         .attr('height', height)
         .attr('fill', 'transparent')
         .on('click', () => {
@@ -410,14 +412,15 @@ export class NgD3GanttService {
         });
 
     const rightClickableArea = DRAWAREA.append('rect')
-        .attr('width', (width) / 2)
-        .attr('transform', 'translate(' + ((width) / 2) + ' ,0)')
-        .attr('height', height)
-        .attr('fill', 'transparent')
-        .on('click', () => {
-            this.goToNext();
-            this.config.onAreaClick('right');
-        });
+      .attr('class', 'navigation navigation-right')
+      .attr('width', (width) / clickableAreaDivisor)
+      .attr('transform', 'translate(' + ((width) / clickableAreaDivisor * 2) + ' ,0)')
+      .attr('height', height)
+      .attr('fill', 'transparent')
+      .on('click', () => {
+          this.goToNext();
+          this.config.onAreaClick('right');
+      });
 
 
     firstSection.selectAll('.bar')
@@ -591,11 +594,12 @@ export class NgD3GanttService {
         });
     const title = blockDrawArea.append('text')
           .attr('class', 'Title')
-          .attr('x', config.box_padding)
+          .attr('x', this.config.box_padding)
           .attr('y', (d, i) => {
               return (y(i + 1) + 20);
           })
           .text( (d) => {
+              console.log(d);
               return d.title;
           });
 
@@ -625,7 +629,7 @@ export class NgD3GanttService {
             .attr('opacity', d => {
                 return Number(getWidth(d) > 200);
             });
-    const progressBar = Blocks
+    const progressBar = footer
       .append('rect')
           .attr('class', 'ProgressBar')
           .attr('fill', '#ddd')
@@ -647,114 +651,113 @@ export class NgD3GanttService {
               return Number(width > PROGRESSBAR_BOUNDARY);
           });
     const blockNodes = Blocks.nodes();
-    console.log(Blocks, blockNodes);
-    Blocks
-        .on('click', function(d) {
-            this.config.onClick(d);
-        })
-        .on('mouseover', function(d, i) {
-            svg.selectAll('.Single--Block')
-                .style('opacity', (b, i) => {
-                    return (d.id === b.id) ? 1 : 0.3;
-                });
+    // Blocks
+    //     .on('click', function(d) {
+    //         this.config.onClick(d);
+    //     })
+    //     .on('mouseover', function(d, i) {
+    //         svg.selectAll('.Single--Block')
+    //             .style('opacity', (b, i) => {
+    //                 return (d.id === b.id) ? 1 : 0.3;
+    //             });
 
-            svg.selectAll('.start-lines, .end-lines')
-                .style('stroke-width', (b, i) => {
-                    return (d.id === b.id) ? 3 : 1;
-                })
-                .style('opacity', (b, i) => {
-                    return Number(d.id === b.id);
-                });
+    //         svg.selectAll('.start-lines, .end-lines')
+    //             .style('stroke-width', (b, i) => {
+    //                 return (d.id === b.id) ? 3 : 1;
+    //             })
+    //             .style('opacity', (b, i) => {
+    //                 return Number(d.id === b.id);
+    //             });
 
-            svg.selectAll('.Single--Node')
-                .attr('width', b => {
-                    if (d.id === b.id) {
-                        if (startsBefore(d) || endsAfter(d)) {
-                            if (getWidth(b) < 500) {
-                                return (getActualWidth(b) + (500 - getWidth(b)) + 10);
-                            }
-                        }
-                        return ((d3.max([getActualWidth(b), 500])) + 10);
-                    } else {
-                        return getActualWidth(b);
-                    }
-                });
+    //         svg.selectAll('.Single--Node')
+    //             .attr('width', b => {
+    //                 if (d.id === b.id) {
+    //                     if (startsBefore(d) || endsAfter(d)) {
+    //                         if (getWidth(b) < 500) {
+    //                             return (getActualWidth(b) + (500 - getWidth(b)) + 10);
+    //                         }
+    //                     }
+    //                     return ((d3.max([getActualWidth(b), 500])) + 10);
+    //                 } else {
+    //                     return getActualWidth(b);
+    //                 }
+    //             });
 
-            svg.selectAll('.ProgressBar')
-                .attr('opacity', b => {
-                  return Number(d.id === b.id || getWidth(b) > 480);
-                });
+    //         svg.selectAll('.ProgressBar')
+    //             .attr('opacity', b => {
+    //               return Number(d.id === b.id || getWidth(b) > 480);
+    //             });
 
-            svg.selectAll('.Duration')
-                .attr('opacity', b => {
-                    return Number(d.id === b.id || getWidth(b) > 200);
-                });
+    //         svg.selectAll('.Duration')
+    //             .attr('opacity', b => {
+    //                 return Number(d.id === b.id || getWidth(b) > 200);
+    //             });
 
-            svg.selectAll('.TermType')
-                .attr('opacity', (b) => {
-                    return Number(d.id === b.id || getWidth(b) > 80);
-                });
+    //         svg.selectAll('.TermType')
+    //             .attr('opacity', (b) => {
+    //                 return Number(d.id === b.id || getWidth(b) > 80);
+    //             });
 
-            secondSection.selectAll('.Date')
-                .style('fill', (b, i) => {
-                    if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
-                    || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
-                      return '#4894ff';
-                    }
-                });
-            secondSection.selectAll('.Date-Block')
-                .style('fill', (b, i) => {
-                    if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
-                    || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
-                      return '#f0f6f9';
-                    }
-                });
+    //         secondSection.selectAll('.Date')
+    //             .style('fill', (b, i) => {
+    //                 if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
+    //                 || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
+    //                   return '#4894ff';
+    //                 }
+    //             });
+    //         secondSection.selectAll('.Date-Block')
+    //             .style('fill', (b, i) => {
+    //                 if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
+    //                 || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
+    //                   return '#f0f6f9';
+    //                 }
+    //             });
 
-            d3.select(this).selectAll('.Title')
-                .text( d => d.title );
+    //         d3.select(this).selectAll('.Title')
+    //             .text( d => d.title );
 
-            d3.select(this).each( (d, i) => {
-                const width = ((d3.max([getWidth(d), 500])) + 10);
-                trimTitle(width, this, config.box_padding * 2);
-            });
-        })
-        .on('mouseout', (d, i) => {
-            svg.selectAll('.Single--Block')
-                .style('opacity', 1);
-            svg.selectAll('.start-lines, .end-lines')
-                .style('stroke-width', 1)
-                .style('opacity', 1);
+    //         d3.select(this).each( (d, i) => {
+    //             const width = ((d3.max([getWidth(d), 500])) + 10);
+    //             trimTitle(width, this, config.box_padding * 2);
+    //         });
+    //     })
+    //     .on('mouseout', (d, i) => {
+    //         svg.selectAll('.Single--Block')
+    //             .style('opacity', 1);
+    //         svg.selectAll('.start-lines, .end-lines')
+    //             .style('stroke-width', 1)
+    //             .style('opacity', 1);
 
-            svg.selectAll('.Single--Node')
-                .attr('width', b => {
-                    return (getActualWidth(b) + 10);
-                });
+    //         svg.selectAll('.Single--Node')
+    //             .attr('width', b => {
+    //                 return (getActualWidth(b) + 10);
+    //             });
 
-            svg.selectAll('.ProgressBar')
-                .attr('opacity', b => {
-                    return Number(getWidth(b) > this.PROGRESSBAR_BOUNDARY);
-                });
+    //         svg.selectAll('.ProgressBar')
+    //             .attr('opacity', b => {
+    //                 return Number(getWidth(b) > this.PROGRESSBAR_BOUNDARY);
+    //             });
 
-            svg.selectAll('.Duration')
-                .attr('opacity', b => {
-                    return Number(getWidth(b) > 200);
-                });
+    //         svg.selectAll('.Duration')
+    //             .attr('opacity', b => {
+    //                 return Number(getWidth(b) > 200);
+    //             });
 
-            svg.selectAll('.TermType')
-                .attr('opacity', b => {
-                    return Number(getWidth(b) > 80);
-                });
-            secondSection.selectAll('.Date')
-                .style('fill', '');
-            secondSection.selectAll('.Date-Block')
-                .style('fill', '');
+    //         svg.selectAll('.TermType')
+    //             .attr('opacity', b => {
+    //                 return Number(getWidth(b) > 80);
+    //             });
+    //         secondSection.selectAll('.Date')
+    //             .style('fill', '');
+    //         secondSection.selectAll('.Date-Block')
+    //             .style('fill', '');
 
-            console.log(this);
-            d3.select(this).each( (d, i) => {
-                const width = getWidth(d);
-                trimTitle(width, this, this.config.box_padding * 2);
-            });
-        })
+    //         console.log(this);
+    //         d3.select(this).each( (d, i) => {
+    //             const width = getWidth(d);
+    //             trimTitle(width, this, this.config.box_padding * 2);
+    //         });
+    //     })
         // .each( (d, i) => {
         //     console.log(d, i);
         //     const width = getWidth(d);
