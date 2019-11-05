@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 import { IGanttConfig } from './ng-d3-gantt.interface';
 import * as moment_ from 'moment';
 const moment = moment_;
-
+// tslint:disable: no-shadowed-variable
 @Injectable({
   providedIn: 'root'
 })
@@ -51,7 +51,7 @@ export class NgD3GanttService {
         case 'overall':
             for (let i = 0; i < this.config.metrics.years.length; i++) {
                 this.config.metrics.years[i] = this.config.metrics.years[i] + this.config.metrics.years.length;
-            };
+            }
             break;
         case 'sprint':
             break;
@@ -115,7 +115,7 @@ export class NgD3GanttService {
     }
 
     const trimTitle = (width, node, padding) => {
-        const textBlock = d3.select(node).select('.Title')
+        const textBlock = d3.select(node).select('.Title');
         let textLength = textBlock.node().getComputedTextLength();
         let text = textBlock.text();
         while (textLength > (width - padding) && text.length > 0) {
@@ -209,16 +209,16 @@ export class NgD3GanttService {
     };
 
     const dateBoundary = [];
-    let subheader_ranges = [];
+    let subheaderRanges = [];
     let months = [];
-    let header_ranges = [];
+    let headerRanges = [];
 
     d3.select(this.config.element)._groups[0][0].innerHTML = '';
 
     if (this.config.metrics.type === 'monthly') {
         months = [this.config.metrics.month];
-        header_ranges = getMonthsRange(months);
-        subheader_ranges = getDaysRange(months);
+        headerRanges = getMonthsRange(months);
+        subheaderRanges = getDaysRange(months);
     } else if (this.config.metrics.type === 'overall') {
         const years = this.config.metrics.years;
         const yearsRange = [];
@@ -226,33 +226,33 @@ export class NgD3GanttService {
             months = months.concat(getMonthsOftheYear(year));
             yearsRange.push(getYearBoundary(year));
         });
-        header_ranges = [{
+        headerRanges = [{
             name: 'Overall View',
             start_date: yearsRange[0].start_date,
             end_date: yearsRange[yearsRange.length - 1].end_date,
-        }]
-        subheader_ranges = yearsRange;
+        }];
+        subheaderRanges = yearsRange;
 
     } else {
         if (this.config.metrics.type === 'quarterly') {
             months = this.config.metrics.months;
-            subheader_ranges = getMonthsRange(months);
+            subheaderRanges = getMonthsRange(months);
             const year = moment(this.config.metrics.months[0], 'MMMM YYYY').format('YYYY');
 
-            header_ranges = [{
+            headerRanges = [{
                 start_date: moment(this.config.metrics.months[0], 'MMMM YYYY').startOf('month').toDate(),
                 end_date: moment(this.config.metrics.months[this.config.metrics.months.length - 1], 'MMMM YYYY').endOf('month').toDate(),
                 name: year,
             }];
 
-        } else if (this.config.metrics.type == 'yearly') {
+        } else if (this.config.metrics.type === 'yearly') {
             months = getMonthsOftheYear(this.config.metrics.year);
-            subheader_ranges = getMonthsRange(months);
-            header_ranges = [getYearBoundary(this.config.metrics.year)];
-        } else if (this.config.metrics.type == 'sprint') {
+            subheaderRanges = getMonthsRange(months);
+            headerRanges = [getYearBoundary(this.config.metrics.year)];
+        } else if (this.config.metrics.type === 'sprint') {
             months = getMonthsOftheYear(this.config.metrics.year);
-            subheader_ranges = this.config.metrics.cycles;
-            header_ranges = [getYearBoundary(this.config.metrics.year)];
+            subheaderRanges = this.config.metrics.cycles;
+            headerRanges = [getYearBoundary(this.config.metrics.year)];
 
         }
 
@@ -262,97 +262,92 @@ export class NgD3GanttService {
     dateBoundary[1] = moment(months[months.length - 1], 'MMM YYYY').endOf('month').toDate();
 
 
-    let margin = { top: 20, right: 50, bottom: 100, left: 50 };
+    const margin = { top: 20, right: 50, bottom: 100, left: 50 };
     let width = d3.max([this.CHART_WIDTH, 400]) - margin.left - margin.right;
-    let height = this.CHART_HEIGHT - margin.top - margin.bottom;
+    const height = this.CHART_HEIGHT - margin.top - margin.bottom;
 
-    let x = d3.scaleTime()
+    const x = d3.scaleTime()
         .domain(dateBoundary)
-        .range([0, width])
+        .range([0, width]);
 
-
-    // let y = d3.scaleOrdinal()
-    //     .rangeRoundBands([0, height], 0.1);
-    let y = d3.scaleBand()
+    const y = d3.scaleBand()
       .rangeRound([0, height])
       .padding(0.1);
 
-    y.domain(this.data.map(function(d, i) {
+    y.domain(this.data.map( (d, i) => {
         return i + 1;
     }));
 
-    let xAxis = d3.axisBottom()
+    const xAxis = d3.axisBottom()
         .scale(x)
         .tickFormat(d3.timeFormat('%d/%m/%Y'));
 
-    let yAxis = d3.axisLeft()
+    const yAxis = d3.axisLeft()
         .scale(y)
         .tickSize(0)
         .tickPadding(6);
 
-    let first_section = this.ELEMENT
+    const firstSection = this.ELEMENT
         .append('div')
         .attr('class', 'first_section')
         .style('height', 40)
         .append('svg')
         .attr('width', width + margin.left + margin.right)
         .attr('height', 40)
-        .append('g')
+        .append('g');
 
-    let second_section = this.ELEMENT
+    const secondSection = this.ELEMENT
         .append('div')
         .attr('class', 'second_section')
         .style('height', 40)
         .append('svg')
         .attr('width', width + margin.left + margin.right)
         .attr('height', 40)
-        .append('g')
+        .append('g');
 
 
     switch (state) {
 
         case 'initial':
-            first_section
-                .attr('transform', 'translate( ' + margin.left + ', 30)')
-            second_section
-                .attr('transform', 'translate( ' + margin.left + ', 0)')
+            firstSection
+                .attr('transform', 'translate( ' + margin.left + ', 30)');
+            secondSection
+                .attr('transform', 'translate( ' + margin.left + ', 0)');
             break;
 
         case 'next':
-            second_section
+            secondSection
                 .attr('transform', 'translate( 1000, 0)')
                 .transition()
-                .attr('transform', 'translate( ' + margin.left + ', 0)')
-            first_section
+                .attr('transform', 'translate( ' + margin.left + ', 0)');
+            firstSection
                 .attr('transform', 'translate( 1000, 30)')
                 .transition()
-                .attr('transform', 'translate( ' + margin.left + ', 30)')
+                .attr('transform', 'translate( ' + margin.left + ', 30)');
             break;
 
         case 'previous':
-            second_section
+            secondSection
                 .attr('transform', 'translate( -1000, 0)')
                 .transition()
-                .attr('transform', 'translate( ' + margin.left + ', 0)')
-            first_section
+                .attr('transform', 'translate( ' + margin.left + ', 0)');
+            firstSection
                 .attr('transform', 'translate( -1000, 30)')
                 .transition()
-                .attr('transform', 'translate( ' + margin.left + ', 30)')
+                .attr('transform', 'translate( ' + margin.left + ', 30)');
             break;
 
     }
 
-
-
-    let DRAWAREA = this.ELEMENT
+    const DRAWAREA = this.ELEMENT
         .append('div')
         .attr('class', 'draw_area')
         .append('svg')
         .attr('class', 'DRAWAREA')
         .attr('width', width + margin.left + margin.right)
-        .attr('height', height + margin.top + margin.bottom)
+        .attr('height', height + margin.top + margin.bottom);
 
-    let svg = DRAWAREA
+    const svg = DRAWAREA
         .append('g')
         .attr('transform', 'translate(' + margin.left + ',' + 0 + ')')
         .selectAll('.start-lines')
@@ -360,87 +355,87 @@ export class NgD3GanttService {
           .enter()
           .append('line')
           .attr('class', 'start-lines')
-          .attr('stroke', function(d) {
-              return d.color
+          .attr('stroke', d => {
+              return d.color;
           })
-          .attr('x1', function(d) {
+          .attr('x1', d => {
               return x(new Date(d.start_date)) + 10;
           })
-          .attr('x2', function(d) {
+          .attr('x2', d => {
               return x(new Date(d.start_date)) + 10;
           })
           .attr('y1', 0)
-          .attr('y2', function(d, i) {
+          .attr('y2', (d, i) => {
               return (y(i + 1) + 20);
           })
         .selectAll('.end-lines')
           .data(data)
           .enter()
           .append('line')
-          .attr('stroke', function(d) {
-              return d.color
+          .attr('stroke', (d) => {
+              return d.color;
           })
           .attr('class', 'end-lines')
-          .attr('x1', function(d) {
+          .attr('x1', (d) => {
               return x(new Date(d.end_date)) + 5;
           })
-          .attr('x2', function(d) {
+          .attr('x2', (d) => {
               return x(new Date(d.end_date)) + 5;
           })
           .attr('y1', 0)
-          .attr('y2', function(d, i) {
+          .attr('y2', (d, i) => {
               return (y(i + 1) + 20);
           });
 
 
-    let lines = svg.append('g').attr('transform', 'translate(0,0)')
+    const lines = svg.append('g').attr('transform', 'translate(0,0)');
 
-    let currentDayArea = svg.append('line')
+    const currentDayArea = svg.append('line')
         .attr('width', getActualWidth(this.currentDay))
         .attr('class', 'CurrentDay-Area')
         .attr('x1', x(new Date(this.currentDay.start_date)))
         .attr('x2', x(new Date(this.currentDay.start_date)))
         .attr('y1', 0)
-        .attr('y2', height)
+        .attr('y2', height);
 
 
-    let leftClickableArea = svg.append('rect')
+    const leftClickableArea = svg.append('rect')
         .attr('width', (width) / 2)
         .attr('height', height)
         .attr('fill', 'transparent')
-        .on('click', function() {
+        .on('click', () => {
             this.goToPrevious();
             this.config.onAreaClick('left');
-        })
+        });
 
-    let rightClickableArea = svg.append('rect')
+    const rightClickableArea = svg.append('rect')
         .attr('width', (width) / 2)
         .attr('transform', 'translate(' + ((width) / 2) + ' ,0)')
         .attr('height', height)
         .attr('fill', 'transparent')
-        .on('click', function() {
+        .on('click', () => {
             this.goToNext();
             this.config.onAreaClick('right');
-        })
+        });
 
 
-    first_section.selectAll('.bar')
-        .data(header_ranges)
+    firstSection.selectAll('.bar')
+        .data(headerRanges)
         .enter().append('text')
         .attr('class', 'first-title')
         .attr('y', -5)
-        .attr('x', function(d) {
+        .attr('x', d => {
             return x(new Date(d.start_date)) + (getWidth(d) / 2);
         })
-        .attr('width', function(d) {
+        .attr('width', d => {
             return getWidth(d);
         })
         .attr('height', y.bandwidth())
-        .text(function(d) {
-            return d.name
+        .text( d => {
+            return d.name;
         });
 
-    second_section
+    secondSection
         .append('rect')
         .attr('x', x(new Date(dateBoundary[0])))
         .attr('width', Math.abs(x(new Date(dateBoundary[0])) - x(new Date(dateBoundary[1]))))
@@ -448,10 +443,10 @@ export class NgD3GanttService {
         .attr('class', 'Date-Block-Outline');
 
 
-    second_section
+    secondSection
         .append('g')
         .selectAll('.bar')
-        .data(subheader_ranges)
+        .data(subheaderRanges)
         .enter()
         .append('rect')
         .attr('x', d => {
@@ -461,14 +456,14 @@ export class NgD3GanttService {
             return getWidth(d);
         })
         .attr('height', 40)
-        .attr('class', function(d) {
+        .attr('class', d => {
             return 'Date-Block Date-' + moment(d.start_date).format('MMYYYY');
         });
 
-    second_section
+    secondSection
         .append('g')
         .selectAll('.bar')
-        .data(subheader_ranges)
+        .data(subheaderRanges)
         .enter().append('text')
         .attr('x', d => {
             return (x(new Date(d.start_date)) + 10);
@@ -486,7 +481,7 @@ export class NgD3GanttService {
 
 
     lines.selectAll('.lines')
-        .data(subheader_ranges)
+        .data(subheaderRanges)
         .enter()
         .append('line')
         .attr('class', 'date-line')
@@ -553,7 +548,7 @@ export class NgD3GanttService {
         const EmptyMessageX = Math.abs((this.EMPTYBLOCK_WIDTH / 2) - (EmptyMessageWidth / 2));
 
         textBlock
-            .attr('transform', 'translate(' + EmptyMessageX + ',20)')
+            .attr('transform', 'translate(' + EmptyMessageX + ',20)');
     }
 
     const bars = svg.append('g').attr('transform', 'translate(0, 20)');
@@ -584,12 +579,12 @@ export class NgD3GanttService {
         .append('g')
         .attr('transform', d => {
             if (startsBefore(d) && isVisible(d)) {
-                let position = Math.abs(x(new Date(d.start_date)));
+                const position = Math.abs(x(new Date(d.start_date)));
                 return 'translate(' + position + ', 0)';
             } else {
                 return 'translate(0, 0)';
             }
-        })
+        });
     const title = Blocks.append('text')
           .attr('class', 'Title')
           .attr('x', config.box_padding)
@@ -635,8 +630,7 @@ export class NgD3GanttService {
           .attr('class', 'ProgressBar ProgressBar-Fill')
           .attr('fill', 'red')
           .attr('width', d => {
-              let width = ((d.completion_percentage * PROGRESSBAR_WIDTH) / 100);
-              return width;
+              return ((d.completion_percentage * PROGRESSBAR_WIDTH) / 100);
           })
       .selectAll('.ProgressBar')
           .attr('rx', 5)
@@ -645,11 +639,9 @@ export class NgD3GanttService {
           .attr('height', 7)
           .attr('x', 180)
           .attr('opacity', d => {
-              let width = getWidth(d);
+              const width = getWidth(d);
               return Number(width > PROGRESSBAR_BOUNDARY);
           });
-
-
 
     Blocks
         .on('click', function(d) {
@@ -657,109 +649,109 @@ export class NgD3GanttService {
         })
         .on('mouseover', function(d, i) {
             svg.selectAll('.Single--Block')
-                .style('opacity', function(b, i) {
-                    return (d.id == b.id) ? 1 : 0.3;
-                })
+                .style('opacity', (b, i) => {
+                    return (d.id === b.id) ? 1 : 0.3;
+                });
 
             svg.selectAll('.start-lines, .end-lines')
-                .style('stroke-width', function(b, i) {
-                    return (d.id == b.id) ? 3 : 1;
+                .style('stroke-width', (b, i) => {
+                    return (d.id === b.id) ? 3 : 1;
                 })
-                .style('opacity', function(b, i) {
-                    return Number(d.id == b.id);
-                })
+                .style('opacity', (b, i) => {
+                    return Number(d.id === b.id);
+                });
 
             svg.selectAll('.Single--Node')
-                .attr('width', function(b) {
-                    if (d.id == b.id) {
+                .attr('width', b => {
+                    if (d.id === b.id) {
                         if (startsBefore(d) || endsAfter(d)) {
                             if (getWidth(b) < 500) {
-                                return (getActualWidth(b) + (500 - getWidth(b)) + 10)
+                                return (getActualWidth(b) + (500 - getWidth(b)) + 10);
                             }
                         }
                         return ((d3.max([getActualWidth(b), 500])) + 10);
                     } else {
-                        return getActualWidth(b)
+                        return getActualWidth(b);
                     }
-                })
+                });
 
             svg.selectAll('.ProgressBar')
-                .attr('opacity', function(b) {
-                    return Number(d.id == b.id || getWidth(b) > 480)
-                })
+                .attr('opacity', b => {
+                  return Number(d.id === b.id || getWidth(b) > 480);
+                });
 
             svg.selectAll('.Duration')
-                .attr('opacity', function(b) {
-                    return Number(d.id == b.id || getWidth(b) > 200)
-                })
+                .attr('opacity', b => {
+                    return Number(d.id === b.id || getWidth(b) > 200);
+                });
 
             svg.selectAll('.TermType')
-                .attr('opacity', function(b) {
-                    return Number(d.id == b.id || getWidth(b) > 80)
-                })
+                .attr('opacity', (b) => {
+                    return Number(d.id === b.id || getWidth(b) > 80);
+                });
 
-            second_section.selectAll('.Date')
-                .style('fill', function(b, i) {
-                    if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days') || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days'))
-                        return '#4894ff';
-
-                })
-            second_section.selectAll('.Date-Block')
-                .style('fill', function(b, i) {
-                    if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days') || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days'))
-                        return '#f0f6f9';
-
-                })
+            secondSection.selectAll('.Date')
+                .style('fill', (b, i) => {
+                    if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
+                    || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
+                      return '#4894ff';
+                    }
+                });
+            secondSection.selectAll('.Date-Block')
+                .style('fill', (b, i) => {
+                    if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
+                    || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
+                      return '#f0f6f9';
+                    }
+                });
 
             d3.select(this).selectAll('.Title')
-                .text(function(d) {
-                    return d.title
-                })
+                .text( d => d.title );
 
-            d3.select(this).each(function(d, i) {
-                let width = ((d3.max([getWidth(d), 500])) + 10);
-                trimTitle(width, this, config.box_padding * 2)
-            })
+            d3.select(this).each( (d, i) => {
+                const width = ((d3.max([getWidth(d), 500])) + 10);
+                trimTitle(width, this, config.box_padding * 2);
+            });
         })
-        .on('mouseout', function(d, i) {
+        .on('mouseout', (d, i) => {
             svg.selectAll('.Single--Block')
-                .style('opacity', 1)
+                .style('opacity', 1);
             svg.selectAll('.start-lines, .end-lines')
                 .style('stroke-width', 1)
-                .style('opacity', 1)
+                .style('opacity', 1);
 
             svg.selectAll('.Single--Node')
-                .attr('width', function(b) {
+                .attr('width', b => {
                     return (getActualWidth(b) + 10);
-                })
+                });
 
             svg.selectAll('.ProgressBar')
-                .attr('opacity', function(b) {
-                    return Number(getWidth(b) > this.PROGRESSBAR_BOUNDARY)
-                })
+                .attr('opacity', b => {
+                    return Number(getWidth(b) > this.PROGRESSBAR_BOUNDARY);
+                });
 
             svg.selectAll('.Duration')
-                .attr('opacity', function(b) {
-                    return Number(getWidth(b) > 200)
-                })
+                .attr('opacity', b => {
+                    return Number(getWidth(b) > 200);
+                });
 
             svg.selectAll('.TermType')
-                .attr('opacity', function(b) {
-                    return Number(getWidth(b) > 80)
-                })
-            second_section.selectAll('.Date')
-                .style('fill', '')
-            second_section.selectAll('.Date-Block')
-                .style('fill', '')
+                .attr('opacity', b => {
+                    return Number(getWidth(b) > 80);
+                });
+            secondSection.selectAll('.Date')
+                .style('fill', '');
+            secondSection.selectAll('.Date-Block')
+                .style('fill', '');
 
-            d3.select(this).each(function(d, i) {
-                let width = getWidth(d);
-                trimTitle(width, this, config.box_padding * 2)
-            })
+            d3.select(this).each( (d, i) => {
+                const width = getWidth(d);
+                trimTitle(width, this, config.box_padding * 2);
+            });
         })
-        .each(function(d, i) {
-            let width = getWidth(d);
-            trimTitle(width, this, config.box_padding * 2)
+        .each( (d, i) => {
+            const width = getWidth(d);
+            trimTitle(width, this, config.box_padding * 2);
         });
 
   }
