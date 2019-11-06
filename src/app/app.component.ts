@@ -89,7 +89,7 @@ export class AppComponent {
     box_padding: 10, // Padding for the blocks
     // metrics: {type: 'overall', years: [2016, 2017, 2018]}, // Type of gantt
     // metrics: {type: 'sprint', year: 2017, cycles: this.cycles}, // Type of gantt
-    metrics: {type: 'yearly', year: 2017}, // Type of gantt
+     metrics: {type: 'yearly', year: 2017}, // Type of gantt
     // metrics: {type: 'monthly', month: 'March 2017'}, // For Monthly Data
     // metrics: {type: 'quarterly', months: ['January 2017', 'February 2017', 'March 2017']}, // For quarterly or half yearly data
     onClick: (data) => {

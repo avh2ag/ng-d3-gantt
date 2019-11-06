@@ -39,7 +39,7 @@ export class NgD3GanttService {
 
   constructor() {
     this.PROGRESSBAR_WIDTH = 200;
-    this.PROGRESSBAR_BOUNDARY = 380;
+    this.PROGRESSBAR_BOUNDARY = 250;
     this.EMPTYBLOCK_HEIGHT = 150;
     this.BUTTON_COLOR = '#15bfd8';
     this.currentDay = {
@@ -398,19 +398,6 @@ export class NgD3GanttService {
       .attr('y1', 0)
       .attr('y2', height);
 
-    const clickableAreaDivisor = 3;
-    const leftClickableArea = DRAWAREA.append('rect')
-        .attr('width', (width) / clickableAreaDivisor)
-        .attr('class', 'navigation navigation-left')
-        .attr('height', height)
-        .attr('fill', 'transparent');
-
-    const rightClickableArea = DRAWAREA.append('rect')
-      .attr('class', 'navigation navigation-right')
-      .attr('width', (width) / clickableAreaDivisor)
-      .attr('transform', 'translate(' + ((width) / clickableAreaDivisor * 2) + ' ,0)')
-      .attr('height', height)
-      .attr('fill', 'transparent');
 
     firstSection.selectAll('.bar')
         .data(headerRanges)
@@ -574,7 +561,7 @@ export class NgD3GanttService {
         .attr('transform', (d, i) => {
             if (startsBefore(d) && isVisible(d)) {
                 const positionX = Math.abs(x(new Date(d.start_date)));
-                const positionY = Math.abs(y(i + 1));
+                const positionY = Math.abs(y(i));
                 return `translate(${positionX}, ${positionY})`;
             } else {
                 return 'translate(0, 0)';
@@ -646,7 +633,7 @@ export class NgD3GanttService {
                   const width = getWidth(d);
                   return Number(width > this.PROGRESSBAR_BOUNDARY);
               });
-    blockContent
+    Blocks
         .on('click', d => {
           config.onClick(d);
         })
