@@ -607,13 +607,12 @@ export class NgD3GanttService {
         .append('g')
         .attr('class', 'node-draw-area')
         .attr('transform', (d, i) => {
-            if (startsBefore(d) && isVisible(d)) {
-                const positionX = Math.abs(x(new Date(d.start_date)));
-                const positionY = Math.abs(y(i));
-                return `translate(${positionX}, ${positionY})`;
-            } else {
-                return 'translate(0, 0)';
-            }
+          if (startsBefore(d) && isVisible(d)) {
+              const positionX = Math.abs(x(new Date(d.start_date)));
+              return `translate(${positionX}, 0)`;
+          } else {
+              return 'translate(0, 0)';
+          }
         });
     const title = blockContent.append('text')
           .attr('class', 'Title')
