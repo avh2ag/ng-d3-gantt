@@ -158,18 +158,34 @@ export class NgD3GanttService {
       }));
   }
 
-  private drawChartTitle(rootEl, width: number) {
-    return rootEl
-    .append('div')
-    .attr('class', 'graph first_section')
-    .style('height', 40)
-    .append('svg')
-    .attr('width', width + this.margin.left + this.margin.right)
-    .attr('height', 40)
-    .append('g');
+  private drawChartTitle(rootEl, headerRanges, x, y, width: number, widthFn: (d) => number) {
+    const chartTitle = rootEl
+      .append('div')
+      .attr('class', 'graph first_section')
+      .style('height', 40)
+      .append('svg')
+      .attr('width', width + this.margin.left + this.margin.right)
+      .attr('height', 40)
+      .append('g');
+    chartTitle.selectAll('.bar')
+    .data(headerRanges)
+    .enter().append('text')
+    .attr('class', 'first-title')
+    .attr('y', -5)
+    .attr('x', (d: IGanttData) => {
+        return x(new Date(d.start_date)) + (widthFn(d) / 2);
+    })
+    .attr('width', (d: IGanttData) => {
+        return widthFn(d);
+    })
+    .attr('height', y.bandwidth())
+    .text( d => {
+      return d.name;
+    });
+    return chartTitle;
   }
 
-  private drawTimeSeries(rootEl, width: number) {
+  private drawTimeSeriesContainer(rootEl, width: number) {
     return rootEl
       .append('div')
       .attr('class', 'graph second_section')
@@ -180,17 +196,17 @@ export class NgD3GanttService {
       .append('g');
   }
 
-  private drawTransitions(state: string, chartTitle, timeSeries) {
+  private drawTransitions(state: string, chartTitle, timeSeriesContainer) {
     switch (state) {
       case 'initial':
           chartTitle
               .attr('transform', 'translate( ' + this.margin.left + ', 30)');
-          timeSeries
+          timeSeriesContainer
               .attr('transform', 'translate( ' + this.margin.left + ', 0)');
           break;
 
       case 'next':
-          timeSeries
+          timeSeriesContainer
               .attr('transform', 'translate( 1000, 0)')
               .transition()
               .attr('transform', 'translate( ' + this.margin.left + ', 0)');
@@ -201,7 +217,7 @@ export class NgD3GanttService {
           break;
 
       case 'previous':
-          timeSeries
+          timeSeriesContainer
               .attr('transform', 'translate( -1000, 0)')
               .transition()
               .attr('transform', 'translate( ' + this.margin.left + ', 0)');
@@ -232,8 +248,10 @@ export class NgD3GanttService {
       .append('line')
       .attr('class', 'start-lines')
       .attr('stroke', (d: IGanttData) => {
-          return d.color;
+        // return d.color;
+        return '#d9d9d9';
       })
+      .attr('stroke-width', 2)
       .attr('x1', (d: IGanttData) => {
           return x(new Date(d.start_date)) + 10;
       })
@@ -253,8 +271,10 @@ export class NgD3GanttService {
       .enter()
       .append('line')
       .attr('stroke', (d: IGanttData) => {
-          return d.color;
+        // return d.color;
+        return '#d9d9d9';
       })
+      .attr('stroke-width', 2)
       .attr('class', 'end-lines')
       .attr('x1', (d: IGanttData) => {
           return x(new Date(d.end_date)) + 5;
@@ -290,6 +310,60 @@ export class NgD3GanttService {
     return lines;
   }
 
+  private drawCurrentDayLine(rootEl, width: number, height: number, x1: number, x2: number) {
+    return rootEl
+      .append('line')
+      .attr('width', width)
+      .attr('class', 'current-day-line')
+      .attr('x1', x1)
+      .attr('x2', x2)
+      .attr('y1', 0)
+      .attr('y2', height);
+  }
+
+  private drawTimeSeries(timeSeries, dateBoundary, subheaderRanges, x: any, widthFn: (d) => number) {
+    timeSeries
+        .append('rect')
+        .attr('x', x(new Date(dateBoundary[0])))
+        .attr('width', Math.abs(x(new Date(dateBoundary[0])) - x(new Date(dateBoundary[1]))))
+        .attr('height', 40)
+        .attr('class', 'Date-Block-Outline');
+
+    timeSeries
+        .append('g')
+        .selectAll('.bar')
+        .data(subheaderRanges)
+        .enter()
+        .append('rect')
+        .attr('x', (d: IGanttData) => {
+            return x(new Date(d.start_date));
+        })
+        .attr('width', (d: IGanttData) => {
+            return widthFn(d);
+        })
+        .attr('height', 40)
+        .attr('class', (d: IGanttData) => {
+            return 'Date-Block Date-' + moment(d.start_date).format('MMYYYY');
+        });
+    timeSeries
+        .append('g')
+        .selectAll('.bar')
+        .data(subheaderRanges)
+        .enter().append('text')
+        .attr('x', d => {
+            return (x(new Date(d.start_date)) + 10);
+        })
+        .attr('width', (d: IGanttData) => {
+            return widthFn(d);
+        })
+        .attr('y', 25)
+        .text( d => {
+            return d.name;
+        })
+        .attr('class', d => {
+            return 'second-title Date Date-' + moment(d).format('MMYYYY');
+        });
+  }
 
   public draw(state: string, data: Array<IGanttData>, config: IGanttConfig, elementId: string) {
     let dateBoundary = [];
@@ -458,103 +532,24 @@ export class NgD3GanttService {
         .tickPadding(6);
     /* End Axis and Dimensions */
 
-    const chartTitle = this.drawChartTitle(ROOT_ELEMENT, width);
-    const timeSeries = this.drawTimeSeries(ROOT_ELEMENT, width);
-    this.drawTransitions(state, chartTitle, timeSeries);
+    const chartTitle = this.drawChartTitle(ROOT_ELEMENT, headerRanges, x, y, width, getWidth);
+    const timeSeriesContainer = this.drawTimeSeriesContainer(ROOT_ELEMENT, width);
+    this.drawTransitions(state, chartTitle, timeSeriesContainer);
 
     const canvasArea = this.drawCanvasArea(ROOT_ELEMENT, height, width);
     const startLines = this.drawStartLines(canvasArea, data, x, y);
     const endLines = this.drawEndLines(canvasArea, data, x, y);
     if (config.isShowGridlines) {
       this.drawGridLines(canvasArea, subheaderRanges, x, height);
-      // const lines = canvasArea
-      // .append('g')
-      // .attr('class', 'lines')
-      // .attr('transform', 'translate(0,0)');
-      // // add a toggle here
-      // lines.selectAll('.lines')
-      //   .data(subheaderRanges)
-      //   .enter()
-      //   .append('line')
-      //   .attr('class', 'date-line')
-      //   .attr('x1', d => {
-      //     return x(new Date(d.start_date));
-      //   })
-      //   .attr('x2', d => {
-      //     return x(new Date(d.start_date));
-      //   })
-      //   .attr('y1', 0)
-      //   .attr('y2', height);
     }
 
-    const currentDayArea = canvasArea
-      .append('line')
-      .attr('width', getActualWidth(this.currentDay))
-      .attr('class', 'CurrentDay-Area')
-      .attr('x1', x(new Date(this.currentDay.start_date)))
-      .attr('x2', x(new Date(this.currentDay.start_date)))
-      .attr('y1', 0)
-      .attr('y2', height);
+    this.drawCurrentDayLine(canvasArea,
+      getActualWidth(this.currentDay),
+      height,
+      x(new Date(this.currentDay.start_date)),
+      x(new Date(this.currentDay.start_date)));
 
-
-    chartTitle.selectAll('.bar')
-        .data(headerRanges)
-        .enter().append('text')
-        .attr('class', 'first-title')
-        .attr('y', -5)
-        .attr('x', (d: IGanttData) => {
-            return x(new Date(d.start_date)) + (getWidth(d) / 2);
-        })
-        .attr('width', (d: IGanttData) => {
-            return getWidth(d);
-        })
-        .attr('height', y.bandwidth())
-        .text( d => {
-            return d.name;
-        });
-
-    timeSeries
-        .append('rect')
-        .attr('x', x(new Date(dateBoundary[0])))
-        .attr('width', Math.abs(x(new Date(dateBoundary[0])) - x(new Date(dateBoundary[1]))))
-        .attr('height', 40)
-        .attr('class', 'Date-Block-Outline');
-
-
-    timeSeries
-        .append('g')
-        .selectAll('.bar')
-        .data(subheaderRanges)
-        .enter()
-        .append('rect')
-        .attr('x', (d: IGanttData) => {
-            return x(new Date(d.start_date));
-        })
-        .attr('width', (d: IGanttData) => {
-            return getWidth(d);
-        })
-        .attr('height', 40)
-        .attr('class', (d: IGanttData) => {
-            return 'Date-Block Date-' + moment(d.start_date).format('MMYYYY');
-        });
-    timeSeries
-        .append('g')
-        .selectAll('.bar')
-        .data(subheaderRanges)
-        .enter().append('text')
-        .attr('x', d => {
-            return (x(new Date(d.start_date)) + 10);
-        })
-        .attr('width', (d: IGanttData) => {
-            return getWidth(d);
-        })
-        .attr('y', 25)
-        .text( d => {
-            return d.name;
-        })
-        .attr('class', d => {
-            return 'second-title Date Date-' + moment(d).format('MMYYYY');
-        });
+    this.drawTimeSeries(timeSeriesContainer, dateBoundary, subheaderRanges, x, getWidth);
 
     if (data.length === 0) {
         const EmptyBlockX = ((CHART_WIDTH / 2) - (EMPTYBLOCK_WIDTH / 2));
@@ -700,13 +695,17 @@ export class NgD3GanttService {
                     return (d.id === b.id) ? 1 : 0.3;
                 });
 
-            Blocks.selectAll('.start-lines, .end-lines')
+            canvasArea.selectAll('.start-lines, .end-lines')
                 .style('stroke-width', (b, i) => {
-                    return (d.id === b.id) ? 3 : 1;
+                    return (d.id === b.id) ? 3 : 2;
                 })
-                .style('opacity', (b, i) => {
-                    return Number(d.id === b.id);
+                .style('stroke', (b, i) => {
+                  console.log(b);
+                  return (d.id === b.id) ? '#4894ff' : '#d9d9d9';
                 });
+                // .style('opacity', (b, i) => {
+                //     return Number(d.id === b.id);
+                // });
 
             Blocks.selectAll('.Single--Node')
                 .attr('width', b => {
@@ -737,14 +736,14 @@ export class NgD3GanttService {
                     return Number(d.id === b.id || getWidth(b) > 80);
                 });
 
-            timeSeries.selectAll('.Date')
+            timeSeriesContainer.selectAll('.Date')
                 .style('fill', (b, i) => {
                     if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
                     || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
                       return '#4894ff';
                     }
                 });
-            timeSeries.selectAll('.Date-Block')
+            timeSeriesContainer.selectAll('.Date-Block')
                 .style('fill', (b, i) => {
                     if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
                     || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
@@ -762,8 +761,8 @@ export class NgD3GanttService {
         .on('mouseout', (d, i) => {
             Blocks.selectAll('.Single--Block')
                 .style('opacity', 1);
-            Blocks.selectAll('.start-lines, .end-lines')
-                .style('stroke-width', 1)
+            canvasArea.selectAll('.start-lines, .end-lines')
+                .style('stroke-width', 2)
                 .style('opacity', 1);
 
             Blocks.selectAll('.Single--Node')
@@ -785,9 +784,9 @@ export class NgD3GanttService {
                 .attr('opacity', b => {
                     return Number(getWidth(b) > 80);
                 });
-            timeSeries.selectAll('.Date')
+            timeSeriesContainer.selectAll('.Date')
                 .style('fill', '');
-            timeSeries.selectAll('.Date-Block')
+            timeSeriesContainer.selectAll('.Date-Block')
                 .style('fill', '');
 
             blockContent.filter((entry: IGanttData, i) => {

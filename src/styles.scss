@@ -39,7 +39,7 @@ body {
   stroke: #ccc;
 }
 .start-lines, .end-lines {
-  stroke-width: 1;
+  stroke-width: 2;
 }
 
 .gantt-wrapper {
@@ -76,6 +76,6 @@ body {
   border-radius: 4px;
 }
 
-.CurrentDay-Area {
+.current-day-line {
   stroke: #60bdf1;
 }/* You can add global styles to this file, and also import other style files */

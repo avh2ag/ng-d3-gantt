@@ -222,7 +222,7 @@ export function ganttChart(config) {
 
       var currentDayArea = svg.append('line')
           .attr('width', getActualWidth(currentDay))
-          .attr('class', 'CurrentDay-Area')
+          .attr('class', 'current-day-line')
           .attr("x1", x(new Date(currentDay.start_date)))
           .attr("x2", x(new Date(currentDay.start_date)))
           .attr("y1", 0)
