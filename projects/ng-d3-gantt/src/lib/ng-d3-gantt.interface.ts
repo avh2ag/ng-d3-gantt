@@ -3,6 +3,7 @@ export interface IGanttConfig {
   box_padding: number; // move to extras
   metrics: IGanttMetrics;
   isShowProgressBar: boolean;
+  isShowGridlines: boolean;
   onClick: (data: any) => void;
   onEmptyButtonClick: () => void;
   onAreaClick: (location: any) => void;

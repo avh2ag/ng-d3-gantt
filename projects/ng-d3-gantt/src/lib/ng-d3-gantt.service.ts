@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import * as d3 from 'd3';
 import { IGanttConfig, IGanttData, IGanttCycle } from './ng-d3-gantt.interface';
 import * as moment_ from 'moment';
-import { convertActionBinding } from '@angular/compiler/src/compiler_util/expression_converter';
 const moment = moment_;
 
 // functions that need to be hoisted to play nicely
@@ -214,6 +213,83 @@ export class NgD3GanttService {
     }
   }
 
+  private drawCanvasArea(rootEl, height: number, width: number) {
+    return rootEl
+      .append('div')
+      .attr('class', 'graph draw_area')
+      .append('svg')
+      .attr('class', 'canvas_area')
+      .attr('width', width + this.margin.left + this.margin.right)
+      .attr('height', height + this.margin.top + this.margin.bottom);
+  }
+
+  private drawStartLines(rootEl, data: Array<IGanttData>, x: any, y: any) {
+    return rootEl.append('g')
+    .attr('transform', 'translate(' + this.margin.left + ',' + 0 + ')')
+    .selectAll('.start-lines')
+      .data(data)
+      .enter()
+      .append('line')
+      .attr('class', 'start-lines')
+      .attr('stroke', (d: IGanttData) => {
+          return d.color;
+      })
+      .attr('x1', (d: IGanttData) => {
+          return x(new Date(d.start_date)) + 10;
+      })
+      .attr('x2', (d: IGanttData) => {
+          return x(new Date(d.start_date)) + 10;
+      })
+      .attr('y1', 0)
+      .attr('y2', (d, i) => {
+          return (y(i + 1) + 20);
+      });
+  }
+
+  private drawEndLines(rootEl, data: Array<IGanttData>, x: any, y: any) {
+    return rootEl
+      .selectAll('.end-lines')
+      .data(data)
+      .enter()
+      .append('line')
+      .attr('stroke', (d: IGanttData) => {
+          return d.color;
+      })
+      .attr('class', 'end-lines')
+      .attr('x1', (d: IGanttData) => {
+          return x(new Date(d.end_date)) + 5;
+      })
+      .attr('x2', (d: IGanttData) => {
+          return x(new Date(d.end_date)) + 5;
+      })
+      .attr('y1', 0)
+      .attr('y2', (d, i) => {
+          return (y(i + 1) + 20);
+      });
+  }
+
+  private drawGridLines(rootEl, subheaderRanges: Array<any>, x: any, height: number) {
+    const lines = rootEl
+    .append('g')
+    .attr('class', 'lines')
+    .attr('transform', 'translate(0,0)');
+    // add a toggle here
+    lines.selectAll('.lines')
+      .data(subheaderRanges)
+      .enter()
+      .append('line')
+      .attr('class', 'date-line')
+      .attr('x1', d => {
+        return x(new Date(d.start_date));
+      })
+      .attr('x2', d => {
+        return x(new Date(d.start_date));
+      })
+      .attr('y1', 0)
+      .attr('y2', height);
+    return lines;
+  }
+
 
   public draw(state: string, data: Array<IGanttData>, config: IGanttConfig, elementId: string) {
     let dateBoundary = [];
@@ -386,58 +462,32 @@ export class NgD3GanttService {
     const timeSeries = this.drawTimeSeries(ROOT_ELEMENT, width);
     this.drawTransitions(state, chartTitle, timeSeries);
 
-    const DRAWAREA = ROOT_ELEMENT
-        .append('div')
-        .attr('class', 'graph draw_area')
-        .append('svg')
-        .attr('class', 'DRAWAREA')
-        .attr('width', width + this.margin.left + this.margin.right)
-        .attr('height', height + this.margin.top + this.margin.bottom);
+    const canvasArea = this.drawCanvasArea(ROOT_ELEMENT, height, width);
+    const startLines = this.drawStartLines(canvasArea, data, x, y);
+    const endLines = this.drawEndLines(canvasArea, data, x, y);
+    if (config.isShowGridlines) {
+      this.drawGridLines(canvasArea, subheaderRanges, x, height);
+      // const lines = canvasArea
+      // .append('g')
+      // .attr('class', 'lines')
+      // .attr('transform', 'translate(0,0)');
+      // // add a toggle here
+      // lines.selectAll('.lines')
+      //   .data(subheaderRanges)
+      //   .enter()
+      //   .append('line')
+      //   .attr('class', 'date-line')
+      //   .attr('x1', d => {
+      //     return x(new Date(d.start_date));
+      //   })
+      //   .attr('x2', d => {
+      //     return x(new Date(d.start_date));
+      //   })
+      //   .attr('y1', 0)
+      //   .attr('y2', height);
+    }
 
-    const startLines = DRAWAREA
-        .append('g')
-        .attr('transform', 'translate(' + this.margin.left + ',' + 0 + ')')
-        .selectAll('.start-lines')
-          .data(data)
-          .enter()
-          .append('line')
-          .attr('class', 'start-lines')
-          .attr('stroke', (d: IGanttData) => {
-              return d.color;
-          })
-          .attr('x1', (d: IGanttData) => {
-              return x(new Date(d.start_date)) + 10;
-          })
-          .attr('x2', (d: IGanttData) => {
-              return x(new Date(d.start_date)) + 10;
-          })
-          .attr('y1', 0)
-          .attr('y2', (d, i) => {
-              return (y(i + 1) + 20);
-          });
-    const endLines = DRAWAREA
-      .selectAll('.end-lines')
-      .data(data)
-      .enter()
-      .append('line')
-      .attr('stroke', (d: IGanttData) => {
-          return d.color;
-      })
-      .attr('class', 'end-lines')
-      .attr('x1', (d: IGanttData) => {
-          return x(new Date(d.end_date)) + 5;
-      })
-      .attr('x2', (d: IGanttData) => {
-          return x(new Date(d.end_date)) + 5;
-      })
-      .attr('y1', 0)
-      .attr('y2', (d, i) => {
-          return (y(i + 1) + 20);
-      });
-
-    const lines = DRAWAREA.append('g').attr('transform', 'translate(0,0)');
-
-    const currentDayArea = DRAWAREA
+    const currentDayArea = canvasArea
       .append('line')
       .attr('width', getActualWidth(this.currentDay))
       .attr('class', 'CurrentDay-Area')
@@ -506,26 +556,9 @@ export class NgD3GanttService {
             return 'second-title Date Date-' + moment(d).format('MMYYYY');
         });
 
-
-    lines.selectAll('.lines')
-        .data(subheaderRanges)
-        .enter()
-        .append('line')
-        .attr('class', 'date-line')
-        .attr('x1', d => {
-            return x(new Date(d.start_date));
-        })
-        .attr('x2', d => {
-            return x(new Date(d.start_date));
-        })
-        .attr('y1', 0)
-        .attr('y2', height);
-
-
-
     if (data.length === 0) {
         const EmptyBlockX = ((CHART_WIDTH / 2) - (EMPTYBLOCK_WIDTH / 2));
-        const EMPTYBLOCK = DRAWAREA
+        const EMPTYBLOCK = canvasArea
                           .append('g')
                           .attr('class', 'EmptyMessageBlock')
                           .attr('transform', 'translate(' + EmptyBlockX + ', 20)');
@@ -578,7 +611,7 @@ export class NgD3GanttService {
             .attr('transform', 'translate(' + EmptyMessageX + ',20)');
     }
 
-    const bars = DRAWAREA.append('g').attr('transform', 'translate(0, 20)');
+    const bars = canvasArea.append('g').attr('transform', 'translate(0, 20)');
 
     const Blocks = bars.selectAll('.bar')
         .data(data)

@@ -93,6 +93,7 @@ export class AppComponent {
     // metrics: {type: 'monthly', month: 'March 2017'}, // For Monthly Data
     // metrics: {type: 'quarterly', months: ['January 2017', 'February 2017', 'March 2017']}, // For quarterly or half yearly data
     isShowProgressBar: false,
+    isShowGridlines: true,
     onClick: (data) => {
       console.log('onClick called on ', data );
     },
