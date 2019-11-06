@@ -12,6 +12,7 @@ import { IGanttConfig, IGanttData } from './ng-d3-gantt.interface';
     </div>
   `,
   styles: [],
+  providers: [NgD3GanttService]
 })
 export class NgD3GanttComponent implements OnInit, AfterViewInit {
   @Input() chartElementId = 'ng-d3-gantt-chart';
@@ -22,24 +23,29 @@ export class NgD3GanttComponent implements OnInit, AfterViewInit {
   ngOnInit() {}
 
   ngAfterViewInit() {
-    this.drawChart();
+    this.drawInitialChart();
   }
 
   @HostListener('window:resize', ['$event'])
   onResize(event) {
-    this.drawChart();
+    this.drawInitialChart();
   }
 
   public goToPrevious() {
-    this.ganttService.goToPrevious();
+   this.config = this.ganttService.goToPrevious(this.config);
+   this.ganttService.clearChart(this.chartElementId);
+   this.ganttService.draw('previous', this.data, this.config, this.chartElementId);
   }
 
-  public goToNext() {
-    this.ganttService.goToNext();
+  public goToNext() { // note: we're gonna have to send emitters to parent as we get more in here
+    this.config = this.ganttService.goToNext(this.config);
+    this.ganttService.clearChart(this.chartElementId);
+    this.ganttService.draw('next', this.data, this.config, this.chartElementId);
   }
 
-  private drawChart() {
-    this.ganttService.ganttChart(this.data, this.config);
+  private drawInitialChart() {
+    this.ganttService.clearChart(this.chartElementId);
+    this.ganttService.draw('initial', this.data, this.config, this.chartElementId);
   }
 
 }
