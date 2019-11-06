@@ -111,38 +111,6 @@ export class NgD3GanttService {
     return config;
   }
 
-  private drawProgressBar(footer, durationOffset: number) {
-    // bar space
-    footer.append('rect')
-        .attr('class', 'ProgressBar')
-        .attr('fill', '#ddd')
-        .attr('width', d => {
-          return d.completion_percentage === undefined ? 0 : this.PROGRESSBAR_WIDTH;
-        });
-    // progressbar fill
-    footer.append('rect')
-          .attr('class', 'ProgressBar ProgressBar-Fill')
-          .attr('fill', 'red')
-          .attr('width', d => {
-              if (d.completion_percentage === undefined) {
-                return 0;
-              } else {
-                return ((d.completion_percentage * this.PROGRESSBAR_WIDTH) / 100);
-              }
-          });
-    footer.selectAll('.ProgressBar')
-              .attr('rx', 5)
-              .attr('ry', 5)
-              .attr('y', -7)
-              .attr('height', 7)
-              .attr('x', durationOffset + 100)
-              .attr('opacity', d => {
-                  // const width = getWidth(d);
-                  const width = 200;
-                  return Number(width > this.PROGRESSBAR_BOUNDARY);
-              });
-  }
-
   private getXScale(width: number, dateBoundary: Array<any>) {
     return d3.scaleTime()
       .domain(dateBoundary)
@@ -392,6 +360,98 @@ export class NgD3GanttService {
       .attr('transform', 'translate(' + EmptyMessageX + ',20)');
   }
 
+  private drawFooterContainer(rootEl, posX, yFn: (idx) => number) {
+    return rootEl.append('g')
+      .attr('transform', (d, i) => {
+        let position = posX;
+        if (posX < 10) {
+            position = 0;
+        }
+        return `translate( ${position}, ${(yFn(i + 1) + 45)})`;
+      });
+  }
+
+  private drawFooterContent(rootEl, widthFn: (d: IGanttData) => number, durationFn: (d: IGanttData) => string) {
+    // Subtitle
+    rootEl.append('text')
+          .attr('class', 'TermType')
+          .text( (d) => {
+            return d.subtitle;
+          })
+          .attr('opacity', (d: IGanttData) => {
+            const durationOffset = this.calculateStringLengthOffset(d.subtitle);
+            return Number(widthFn(d) > durationOffset);
+          });
+    // Duration
+    rootEl.append('text')
+            .attr('class', 'Duration')
+            .attr('x', (d) => {
+              return this.calculateStringLengthOffset(d.subtitle);
+            })
+            .text( (d) => {
+              return `${durationFn(d)}`;
+            })
+            .attr('opacity', d => {
+              return this.getDurationOpacity(d, widthFn);
+            });
+  }
+
+  private drawProgressBar(footer, widthFn: (d: IGanttData) => number, durationFn: (d: IGanttData) => string ) {
+    // bar space
+    footer.append('rect')
+        .attr('class', 'ProgressBar')
+        .attr('fill', '#ddd')
+        .attr('width', d => {
+          return d.completion_percentage === undefined ? 0 : this.PROGRESSBAR_WIDTH;
+        });
+    // progressbar fill
+    footer.append('rect')
+      .attr('class', 'ProgressBar ProgressBar-Fill')
+      .attr('fill', 'red')
+      .attr('width', d => {
+          if (d.completion_percentage === undefined) {
+            return 0;
+          } else {
+            return ((d.completion_percentage * this.PROGRESSBAR_WIDTH) / 100);
+          }
+      });
+    footer.selectAll('.ProgressBar')
+      .attr('rx', 5)
+      .attr('ry', 5)
+      .attr('y', -7)
+      .attr('height', 7)
+      .attr('x', d => {
+        return this.calculateStringLengthOffset(d.subtitle)
+          + this.calculateStringLengthOffset(durationFn(d));
+      })
+      .attr('opacity', d => {
+          // const previousTextWidth = this.calculateStringLengthOffset(d.subtitle)
+          // + this.calculateStringLengthOffset(durationFn(d))
+          // + this.PROGRESSBAR_WIDTH;
+          // return Number(widthFn(d) > previousTextWidth);
+        return this.getProgressBarOpacity(d, widthFn, durationFn);
+      });
+  }
+  /* helper methods */
+  private getProgressBarOpacity(d: IGanttData, widthFn: (d: IGanttData) => number, durationFn: (d: IGanttData) => string): number {
+    const previousTextWidth = this.calculateStringLengthOffset(d.subtitle)
+    + this.calculateStringLengthOffset(durationFn(d))
+    + this.PROGRESSBAR_WIDTH;
+    return Number(widthFn(d) > previousTextWidth);
+  }
+
+  private getDurationOpacity(d: IGanttData, widthFn: (d: IGanttData) => number) {
+    const durationOffset = this.calculateStringLengthOffset(d.subtitle);
+    return Number(widthFn(d) > durationOffset);
+  }
+
+  private calculateStringLengthOffset(text: string) {
+    const fontSizeOffset = 6.5;
+    const paddingRight = 5;
+    return text.length * fontSizeOffset + paddingRight;
+  }
+  /* end helper methods */
+
   public draw(state: string, data: Array<IGanttData>, config: IGanttConfig, elementId: string) {
     let dateBoundary = [];
     const ROOT_ELEMENT = d3.select(`#${elementId}`);
@@ -582,34 +642,36 @@ export class NgD3GanttService {
       this.renderWithNoData(canvasArea, EMPTYBLOCK_WIDTH, this.EMPTYBLOCK_HEIGHT, CHART_WIDTH);
     }
 
-    const bars = canvasArea.append('g').attr('transform', 'translate(0, 20)');
+    const blockContainer = canvasArea
+      .append('g')
+      .attr('class', 'block-container')
+      .attr('transform', 'translate(0, 20)');
 
-    const Blocks = bars.selectAll('.bar')
+    const Blocks = blockContainer.selectAll('.gantt-entry-box')
         .data(data)
         .enter()
         .append('g')
-        .attr('class', 'Single--Block cp')
+        .attr('class', 'gantt-entry-box')
         .attr('transform', (d, i)  => {
             return 'translate(' + x(new Date(d.start_date)) + ',' + 0 + ')';
         });
     const blockArea = Blocks
         .append('rect')
-                .attr('class', 'Single--Node')
-                .attr('rx', 5)
-                .attr('ry', 5)
-                .attr('height', 60)
-                .attr('x', 0)
-                .attr('y', (d, i) => {
-                    return y(i + 1);
-                })
-                .attr('width', d => {
-                    return (getActualWidth(d) + 10);
-                });
-
+        .attr('class', 'gantt-entry-rect')
+        .attr('rx', 5)
+        .attr('ry', 5)
+        .attr('height', 60)
+        .attr('x', 0)
+        .attr('y', (d, i) => {
+            return y(i + 1);
+        })
+        .attr('width', d => {
+            return (getActualWidth(d) + 10);
+        });
 
     const blockContent = Blocks
         .append('g')
-        .attr('class', 'node-draw-area')
+        .attr('class', 'block-content')
         .attr('transform', (d, i) => {
           if (startsBefore(d) && isVisible(d)) {
               const positionX = Math.abs(x(new Date(d.start_date)));
@@ -627,39 +689,13 @@ export class NgD3GanttService {
           .text( (d) => {
               return d.title;
           });
-
-    const footer = blockContent.append('g')
-        .attr('transform', (d, i) => {
-          let position = config.box_padding;
-          if (position < 10) {
-              position = 0;
-          }
-          return 'translate(' + position + ', ' + (y(i + 1) + 45) + ')';
-        });
+    const footerContainer = this.drawFooterContainer(blockContent, config.box_padding, y);
 
     const durationOffset = 100; // @To Do: calc this based on longness of data
-    const subtitle = footer.append('text')
-          .attr('class', 'TermType')
-          .text( (d) => {
-            return d.subtitle;
-          })
-          .attr('opacity', d => {
-            // need to run calc of how long subtitle is vs font
-            return Number(getWidth(d) > durationOffset);
-          });
-    const duration = footer
-      .append('text')
-            .attr('class', 'Duration')
-            .attr('x', durationOffset)
-            .text( (d) => {
-                return getDuration(d);
-            })
-            .attr('opacity', d => {
-                return Number(getWidth(d) > 200);
-            });
+    this.drawFooterContent(footerContainer, getWidth, getDuration);
 
     if (config.isShowProgressBar) {
-      this.drawProgressBar(footer, durationOffset); // to add extra config
+      this.drawProgressBar(footerContainer, getWidth, getDuration); // to add extra config
     }
     // register reactivity
     Blocks
@@ -667,7 +703,7 @@ export class NgD3GanttService {
           config.onClick(d);
         })
         .on('mouseover', (d, i) => {
-            Blocks.selectAll('.Single--Block')
+            Blocks.selectAll('.gantt-entry')
                 .style('opacity', (b, i) => {
                     return (d.id === b.id) ? 1 : 0.3;
                 });
@@ -677,14 +713,16 @@ export class NgD3GanttService {
                     return (d.id === b.id) ? 3 : 2;
                 })
                 .style('stroke', (b, i) => {
-                  console.log(b);
                   return (d.id === b.id) ? '#4894ff' : '#d9d9d9';
                 });
-                // .style('opacity', (b, i) => {
-                //     return Number(d.id === b.id);
-                // });
 
-            Blocks.selectAll('.Single--Node')
+            Blocks.selectAll('.gantt-entry-rect')
+                .style('stroke-width', b => {
+                  return d.id === b.id ? 2 : 1;
+                })
+                .style('stroke', b => {
+                  return d.id === b.id ? '#bbb' : '#ccc';
+                })
                 .attr('width', b => {
                     if (d.id === b.id) {
                       if (startsBefore(d) || endsAfter(d)) {
@@ -705,7 +743,11 @@ export class NgD3GanttService {
 
             Blocks.selectAll('.Duration')
                 .attr('opacity', b => {
-                    return Number(d.id === b.id || getWidth(b) > 200);
+                  if (b.id === d.id) {
+                    return 1;
+                  } else {
+                    return this.getDurationOpacity(b, getWidth);
+                  }
                 });
 
             Blocks.selectAll('.TermType')
@@ -736,25 +778,29 @@ export class NgD3GanttService {
             blockContent.each( hoistedExpandedTitle );
         })
         .on('mouseout', (d, i) => {
-            Blocks.selectAll('.Single--Block')
+            Blocks.selectAll('.gantt-entry')
                 .style('opacity', 1);
             canvasArea.selectAll('.start-lines, .end-lines')
                 .style('stroke-width', 2)
                 .style('opacity', 1);
 
-            Blocks.selectAll('.Single--Node')
+            Blocks.selectAll('.gantt-entry-rect')
                 .attr('width', b => {
                     return (getActualWidth(b) + 10);
-                });
+                })
+                .style('stroke', '#ccc')
+                .style('stroke-width', 1);
 
             Blocks.selectAll('.ProgressBar')
                 .attr('opacity', b => {
-                    return Number(getWidth(b) > this.PROGRESSBAR_BOUNDARY);
+                  return this.getProgressBarOpacity(b, getWidth, getDuration);
                 });
 
             Blocks.selectAll('.Duration')
                 .attr('opacity', b => {
-                    return Number(getWidth(b) > 200);
+                  if (d.id === b.id) {
+                    return this.getDurationOpacity(b, getWidth);
+                  }
                 });
 
             Blocks.selectAll('.TermType')

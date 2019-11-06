@@ -5,10 +5,11 @@ body {
 .chart {
   overflow-x: hidden;
 }
-.cp {
+.gantt-entry-box {
   cursor: pointer;
 }
-.Single--Node {
+
+.gantt-entry-rect {
   fill: #fff;
   stroke: #ccc;
   stroke-width: 1;

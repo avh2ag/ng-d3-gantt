@@ -41,7 +41,7 @@ export class AppComponent {
       title: 'Step 4',
       start_date: '06/11/2017',
       end_date: '08/30/2017',
-      subtitle: 'Short subtitle',
+      subtitle: 'Short subtitle but with a lemon twist',
       completion_percentage: 29,
       color: '#b79d3b',
     },
@@ -92,7 +92,7 @@ export class AppComponent {
     metrics: {type: 'yearly', year: 2017}, // Type of gantt
     // metrics: {type: 'monthly', month: 'March 2017'}, // For Monthly Data
     // metrics: {type: 'quarterly', months: ['January 2017', 'February 2017', 'March 2017']}, // For quarterly or half yearly data
-    isShowProgressBar: false,
+    isShowProgressBar: true,
     isShowGridlines: true,
     onClick: (data) => {
       console.log('onClick called on ', data );
