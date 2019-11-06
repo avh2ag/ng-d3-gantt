@@ -365,6 +365,33 @@ export class NgD3GanttService {
         });
   }
 
+  private renderWithNoData(rootEl, emptyBlockWidth: number, emptyBlockHeight: number, chartWidth: number) {
+    const EmptyBlockX = ((chartWidth / 2) - (emptyBlockWidth / 2));
+    const EMPTYBLOCK = rootEl
+      .append('g')
+      .attr('class', 'EmptyMessageBlock')
+      .attr('transform', 'translate(' + EmptyBlockX + ', 20)');
+    EMPTYBLOCK
+        .append('rect')
+        .attr('fill', '#fff')
+        .attr('x', 0)
+        .attr('width', emptyBlockWidth)
+        .attr('height', emptyBlockHeight);
+
+    EMPTYBLOCK
+        .append('text')
+        .attr('class', 'EmptyMessage')
+        .attr('font-size', 14)
+        .attr('y', 25)
+        .text('No data in chart.'); // make this a config
+
+    const textBlock = EMPTYBLOCK.select('.EmptyMessage');
+    const EmptyMessageWidth = textBlock.node().getComputedTextLength();
+    const EmptyMessageX = Math.abs((emptyBlockWidth / 2) - (EmptyMessageWidth / 2));
+    textBlock
+      .attr('transform', 'translate(' + EmptyMessageX + ',20)');
+  }
+
   public draw(state: string, data: Array<IGanttData>, config: IGanttConfig, elementId: string) {
     let dateBoundary = [];
     const ROOT_ELEMENT = d3.select(`#${elementId}`);
@@ -552,58 +579,7 @@ export class NgD3GanttService {
     this.drawTimeSeries(timeSeriesContainer, dateBoundary, subheaderRanges, x, getWidth);
 
     if (data.length === 0) {
-        const EmptyBlockX = ((CHART_WIDTH / 2) - (EMPTYBLOCK_WIDTH / 2));
-        const EMPTYBLOCK = canvasArea
-                          .append('g')
-                          .attr('class', 'EmptyMessageBlock')
-                          .attr('transform', 'translate(' + EmptyBlockX + ', 20)');
-
-        EMPTYBLOCK
-            .append('rect')
-            .attr('fill', '#fff')
-            .attr('stroke', '#ccc')
-            .attr('x', 0)
-            .attr('width', EMPTYBLOCK_WIDTH)
-            .attr('height', this.EMPTYBLOCK_HEIGHT);
-
-        EMPTYBLOCK
-            .append('text')
-            .attr('class', 'EmptyMessage')
-            .attr('font-size', 25)
-            .attr('y', 25)
-            .text('There is no objective yet, please click to add one');
-
-
-        const EMPTYBLOCK_BUTTON = EMPTYBLOCK
-            .append('g')
-            .attr('class', 'empty_button')
-            .attr('transform', 'translate(' + Math.abs((EMPTYBLOCK_WIDTH / 2) - 50) + ', 100)')
-            .on('click', (d) => {
-                config.onEmptyButtonClick();
-            });
-
-        EMPTYBLOCK_BUTTON
-            .append('rect')
-            .attr('width', 100)
-            .attr('height', 35)
-            .attr('rx', 4)
-            .attr('ry', 4)
-            .attr('fill', this.BUTTON_COLOR);
-
-        EMPTYBLOCK_BUTTON
-            .append('text')
-            .attr('fill', '#fff')
-            .attr('y', 25)
-            .attr('x', 10)
-            .text('Click Here');
-
-        const textBlock = EMPTYBLOCK.select('.EmptyMessage');
-
-        const EmptyMessageWidth = textBlock.node().getComputedTextLength();
-        const EmptyMessageX = Math.abs((EMPTYBLOCK_WIDTH / 2) - (EmptyMessageWidth / 2));
-
-        textBlock
-            .attr('transform', 'translate(' + EmptyMessageX + ',20)');
+      this.renderWithNoData(canvasArea, EMPTYBLOCK_WIDTH, this.EMPTYBLOCK_HEIGHT, CHART_WIDTH);
     }
 
     const bars = canvasArea.append('g').attr('transform', 'translate(0, 20)');
@@ -685,6 +661,7 @@ export class NgD3GanttService {
     if (config.isShowProgressBar) {
       this.drawProgressBar(footer, durationOffset); // to add extra config
     }
+    // register reactivity
     Blocks
         .on('click', d => {
           config.onClick(d);

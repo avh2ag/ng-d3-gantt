@@ -17,6 +17,8 @@ export interface IGanttExtras {
   progressBarBoundary: number;
   buttonColor: string;
   emptyData: IGanttEmptyDataConfig;
+  selectedColor: string; // #4894ff
+  defaultGridColor: string; // #d9d9d9
 }
 
 export interface IGanttEmptyDataConfig {
