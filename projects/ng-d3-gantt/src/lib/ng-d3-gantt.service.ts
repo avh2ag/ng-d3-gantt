@@ -113,14 +113,15 @@ export class NgD3GanttService {
   }
 
   private drawProgressBar(footer, durationOffset: number) {
-    const progressBar = footer
-    .append('rect')
+    // bar space
+    footer.append('rect')
         .attr('class', 'ProgressBar')
         .attr('fill', '#ddd')
         .attr('width', d => {
           return d.completion_percentage === undefined ? 0 : this.PROGRESSBAR_WIDTH;
         });
-    const progressBarFill = footer.append('rect')
+    // progressbar fill
+    footer.append('rect')
           .attr('class', 'ProgressBar ProgressBar-Fill')
           .attr('fill', 'red')
           .attr('width', d => {
@@ -158,11 +159,66 @@ export class NgD3GanttService {
       }));
   }
 
+  private drawChartTitle(rootEl, width: number) {
+    return rootEl
+    .append('div')
+    .attr('class', 'graph first_section')
+    .style('height', 40)
+    .append('svg')
+    .attr('width', width + this.margin.left + this.margin.right)
+    .attr('height', 40)
+    .append('g');
+  }
+
+  private drawTimeSeries(rootEl, width: number) {
+    return rootEl
+      .append('div')
+      .attr('class', 'graph second_section')
+      .style('height', 40)
+      .append('svg')
+      .attr('width', width + this.margin.left + this.margin.right)
+      .attr('height', 40)
+      .append('g');
+  }
+
+  private drawTransitions(state: string, chartTitle, timeSeries) {
+    switch (state) {
+      case 'initial':
+          chartTitle
+              .attr('transform', 'translate( ' + this.margin.left + ', 30)');
+          timeSeries
+              .attr('transform', 'translate( ' + this.margin.left + ', 0)');
+          break;
+
+      case 'next':
+          timeSeries
+              .attr('transform', 'translate( 1000, 0)')
+              .transition()
+              .attr('transform', 'translate( ' + this.margin.left + ', 0)');
+          chartTitle
+              .attr('transform', 'translate( 1000, 30)')
+              .transition()
+              .attr('transform', 'translate( ' + this.margin.left + ', 30)');
+          break;
+
+      case 'previous':
+          timeSeries
+              .attr('transform', 'translate( -1000, 0)')
+              .transition()
+              .attr('transform', 'translate( ' + this.margin.left + ', 0)');
+          chartTitle
+              .attr('transform', 'translate( -1000, 30)')
+              .transition()
+              .attr('transform', 'translate( ' + this.margin.left + ', 30)');
+          break;
+    }
+  }
+
 
   public draw(state: string, data: Array<IGanttData>, config: IGanttConfig, elementId: string) {
     let dateBoundary = [];
-    const ELEMENT = d3.select(`#${elementId}`);
-    const CHART_WIDTH = ELEMENT._groups[0][0].offsetWidth;
+    const ROOT_ELEMENT = d3.select(`#${elementId}`);
+    const CHART_WIDTH = ROOT_ELEMENT._groups[0][0].offsetWidth;
     const EMPTYBLOCK_WIDTH = ((80 * CHART_WIDTH) / 100);
     const CHART_HEIGHT = d3.max([((data.length * 80) + 100), 300]);
 
@@ -314,7 +370,6 @@ export class NgD3GanttService {
     let width = d3.max([CHART_WIDTH, 400]) - this.margin.left - this.margin.right;
     const height = CHART_HEIGHT - this.margin.top - this.margin.bottom;
     const x = this.getXScale(width, dateBoundary);
-
     const y = this.getYScale(height, data);
 
     const xAxis = d3.axisBottom()
@@ -327,57 +382,11 @@ export class NgD3GanttService {
         .tickPadding(6);
     /* End Axis and Dimensions */
 
-    const firstSection = ELEMENT
-        .append('div')
-        .attr('class', 'graph first_section')
-        .style('height', 40)
-        .append('svg')
-        .attr('width', width + this.margin.left + this.margin.right)
-        .attr('height', 40)
-        .append('g');
+    const chartTitle = this.drawChartTitle(ROOT_ELEMENT, width);
+    const timeSeries = this.drawTimeSeries(ROOT_ELEMENT, width);
+    this.drawTransitions(state, chartTitle, timeSeries);
 
-    const secondSection = ELEMENT
-        .append('div')
-        .attr('class', 'graph second_section')
-        .style('height', 40)
-        .append('svg')
-        .attr('width', width + this.margin.left + this.margin.right)
-        .attr('height', 40)
-        .append('g');
-
-
-    switch (state) {
-      case 'initial':
-          firstSection
-              .attr('transform', 'translate( ' + this.margin.left + ', 30)');
-          secondSection
-              .attr('transform', 'translate( ' + this.margin.left + ', 0)');
-          break;
-
-      case 'next':
-          secondSection
-              .attr('transform', 'translate( 1000, 0)')
-              .transition()
-              .attr('transform', 'translate( ' + this.margin.left + ', 0)');
-          firstSection
-              .attr('transform', 'translate( 1000, 30)')
-              .transition()
-              .attr('transform', 'translate( ' + this.margin.left + ', 30)');
-          break;
-
-      case 'previous':
-          secondSection
-              .attr('transform', 'translate( -1000, 0)')
-              .transition()
-              .attr('transform', 'translate( ' + this.margin.left + ', 0)');
-          firstSection
-              .attr('transform', 'translate( -1000, 30)')
-              .transition()
-              .attr('transform', 'translate( ' + this.margin.left + ', 30)');
-          break;
-    }
-
-    const DRAWAREA = ELEMENT
+    const DRAWAREA = ROOT_ELEMENT
         .append('div')
         .attr('class', 'graph draw_area')
         .append('svg')
@@ -438,7 +447,7 @@ export class NgD3GanttService {
       .attr('y2', height);
 
 
-    firstSection.selectAll('.bar')
+    chartTitle.selectAll('.bar')
         .data(headerRanges)
         .enter().append('text')
         .attr('class', 'first-title')
@@ -454,7 +463,7 @@ export class NgD3GanttService {
             return d.name;
         });
 
-    secondSection
+    timeSeries
         .append('rect')
         .attr('x', x(new Date(dateBoundary[0])))
         .attr('width', Math.abs(x(new Date(dateBoundary[0])) - x(new Date(dateBoundary[1]))))
@@ -462,7 +471,7 @@ export class NgD3GanttService {
         .attr('class', 'Date-Block-Outline');
 
 
-    secondSection
+    timeSeries
         .append('g')
         .selectAll('.bar')
         .data(subheaderRanges)
@@ -478,7 +487,7 @@ export class NgD3GanttService {
         .attr('class', (d: IGanttData) => {
             return 'Date-Block Date-' + moment(d.start_date).format('MMYYYY');
         });
-    secondSection
+    timeSeries
         .append('g')
         .selectAll('.bar')
         .data(subheaderRanges)
@@ -696,14 +705,14 @@ export class NgD3GanttService {
                     return Number(d.id === b.id || getWidth(b) > 80);
                 });
 
-            secondSection.selectAll('.Date')
+            timeSeries.selectAll('.Date')
                 .style('fill', (b, i) => {
                     if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
                     || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
                       return '#4894ff';
                     }
                 });
-            secondSection.selectAll('.Date-Block')
+            timeSeries.selectAll('.Date-Block')
                 .style('fill', (b, i) => {
                     if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
                     || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
@@ -744,9 +753,9 @@ export class NgD3GanttService {
                 .attr('opacity', b => {
                     return Number(getWidth(b) > 80);
                 });
-            secondSection.selectAll('.Date')
+            timeSeries.selectAll('.Date')
                 .style('fill', '');
-            secondSection.selectAll('.Date-Block')
+            timeSeries.selectAll('.Date-Block')
                 .style('fill', '');
 
             blockContent.filter((entry: IGanttData, i) => {
