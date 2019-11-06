@@ -2,6 +2,7 @@ export interface IGanttConfig {
   element: string;
   box_padding: number; // move to extras
   metrics: IGanttMetrics;
+  isShowProgressBar: boolean;
   onClick: (data: any) => void;
   onEmptyButtonClick: () => void;
   onAreaClick: (location: any) => void;

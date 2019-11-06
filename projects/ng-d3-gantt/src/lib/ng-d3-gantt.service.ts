@@ -112,8 +112,54 @@ export class NgD3GanttService {
     return config;
   }
 
+  private drawProgressBar(footer, durationOffset: number) {
+    const progressBar = footer
+    .append('rect')
+        .attr('class', 'ProgressBar')
+        .attr('fill', '#ddd')
+        .attr('width', d => {
+          return d.completion_percentage === undefined ? 0 : this.PROGRESSBAR_WIDTH;
+        });
+    const progressBarFill = footer.append('rect')
+          .attr('class', 'ProgressBar ProgressBar-Fill')
+          .attr('fill', 'red')
+          .attr('width', d => {
+              if (d.completion_percentage === undefined) {
+                return 0;
+              } else {
+                return ((d.completion_percentage * this.PROGRESSBAR_WIDTH) / 100);
+              }
+          });
+    footer.selectAll('.ProgressBar')
+              .attr('rx', 5)
+              .attr('ry', 5)
+              .attr('y', -7)
+              .attr('height', 7)
+              .attr('x', durationOffset + 100)
+              .attr('opacity', d => {
+                  // const width = getWidth(d);
+                  const width = 200;
+                  return Number(width > this.PROGRESSBAR_BOUNDARY);
+              });
+  }
 
-  public draw(state, data: Array<IGanttData>, config: IGanttConfig, elementId: string) {
+  private getXScale(width: number, dateBoundary: Array<any>) {
+    return d3.scaleTime()
+      .domain(dateBoundary)
+      .range([0, width]);
+  }
+
+  private getYScale(height: number, data: Array<IGanttData>) {
+    return d3.scaleBand()
+      .rangeRound([0, height])
+      .padding(0.1)
+      .domain(data.map( (d, i) => {
+        return i + 1;
+      }));
+  }
+
+
+  public draw(state: string, data: Array<IGanttData>, config: IGanttConfig, elementId: string) {
     let dateBoundary = [];
     const ELEMENT = d3.select(`#${elementId}`);
     const CHART_WIDTH = ELEMENT._groups[0][0].offsetWidth;
@@ -218,6 +264,7 @@ export class NgD3GanttService {
     let months = [];
     let headerRanges = [];
 
+    /* Setup Date Boundary */
     if (config.metrics.type === 'monthly') {
         months = [config.metrics.month];
         headerRanges = getMonthsRange(months);
@@ -262,22 +309,13 @@ export class NgD3GanttService {
 
     dateBoundary[0] = moment(months[0], 'MMM YYYY').startOf('month').toDate();
     dateBoundary[1] = moment(months[months.length - 1], 'MMM YYYY').endOf('month').toDate();
-
-
-
+    /* End DateBoundary Setup */
+    /* Axis and Dimensions */
     let width = d3.max([CHART_WIDTH, 400]) - this.margin.left - this.margin.right;
     const height = CHART_HEIGHT - this.margin.top - this.margin.bottom;
+    const x = this.getXScale(width, dateBoundary);
 
-    const x = d3.scaleTime()
-        .domain(dateBoundary)
-        .range([0, width]);
-
-    const y = d3.scaleBand()
-      .rangeRound([0, height])
-      .padding(0.1)
-      .domain(data.map( (d, i) => {
-        return i + 1;
-      }));
+    const y = this.getYScale(height, data);
 
     const xAxis = d3.axisBottom()
         .scale(x)
@@ -287,6 +325,7 @@ export class NgD3GanttService {
         .scale(y)
         .tickSize(0)
         .tickPadding(6);
+    /* End Axis and Dimensions */
 
     const firstSection = ELEMENT
         .append('div')
@@ -606,33 +645,10 @@ export class NgD3GanttService {
             .attr('opacity', d => {
                 return Number(getWidth(d) > 200);
             });
-    const progressBar = footer
-      .append('rect')
-          .attr('class', 'ProgressBar')
-          .attr('fill', '#ddd')
-          .attr('width', d => {
-            return d.completion_percentage === undefined ? 0 : this.PROGRESSBAR_WIDTH;
-          });
-    const progressBarFill = footer.append('rect')
-          .attr('class', 'ProgressBar ProgressBar-Fill')
-          .attr('fill', 'red')
-          .attr('width', d => {
-              if (d.completion_percentage === undefined) {
-                return 0;
-              } else {
-                return ((d.completion_percentage * this.PROGRESSBAR_WIDTH) / 100);
-              }
-          });
-    footer.selectAll('.ProgressBar')
-              .attr('rx', 5)
-              .attr('ry', 5)
-              .attr('y', -7)
-              .attr('height', 7)
-              .attr('x', durationOffset + 100)
-              .attr('opacity', d => {
-                  const width = getWidth(d);
-                  return Number(width > this.PROGRESSBAR_BOUNDARY);
-              });
+
+    if (config.isShowProgressBar) {
+      this.drawProgressBar(footer, durationOffset); // to add extra config
+    }
     Blocks
         .on('click', d => {
           config.onClick(d);
