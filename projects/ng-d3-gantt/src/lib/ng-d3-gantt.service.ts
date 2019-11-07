@@ -379,7 +379,7 @@ export class NgD3GanttService {
             });
   }
 
-  private drawProgressBar(footer, widthFn: (d: IGanttData) => number, durationFn: (d: IGanttData) => string ) {
+  private drawProgressBar(footer, dateBoundary, domainFn: (d: IGanttData) => number, durationFn: (d: IGanttData) => string ) {
     // bar space
     footer.append('rect')
         .attr('class', 'ProgressBar')
@@ -412,7 +412,7 @@ export class NgD3GanttService {
           // + this.calculateStringLengthOffset(durationFn(d))
           // + this.PROGRESSBAR_WIDTH;
           // return Number(widthFn(d) > previousTextWidth);
-        return this.getProgressBarOpacity(d, widthFn, durationFn);
+        return this.getProgressBarOpacity(d, dateBoundary, domainFn, durationFn);
       });
   }
 
@@ -464,11 +464,13 @@ export class NgD3GanttService {
   }
 
   /* helper methods */
-  private getProgressBarOpacity(d: IGanttData, widthFn: (d: IGanttData) => number, durationFn: (d: IGanttData) => string): number {
+  private getProgressBarOpacity(d: IGanttData, dateBoundary, domainFn: (d: IGanttData) => number,
+                                durationFn: (d: IGanttData) => string): number {
     const previousTextWidth = this.calculateStringLengthOffset(d.subtitle)
     + this.calculateStringLengthOffset(durationFn(d))
     + this.PROGRESSBAR_WIDTH;
-    return Number(widthFn(d) > previousTextWidth);
+    const width = this.getWidth(d, dateBoundary, domainFn);
+    return Number(width > previousTextWidth);
   }
 
   private getDurationOpacity(d: IGanttData, dateBoundary, domainFn: (d: IGanttData) => number) {
@@ -723,7 +725,7 @@ export class NgD3GanttService {
     const footerContainer = this.drawFooterContainer(blockContent, config.box_padding, y);
     this.drawFooterContent(footerContainer, dateBoundary, x, this.getDuration);
     if (config.isShowProgressBar) {
-      this.drawProgressBar(footerContainer, getWidth, this.getDuration); // to add extra config
+      this.drawProgressBar(footerContainer, dateBoundary, x, this.getDuration); // to add extra config
     }
     /* end of footer content */
 
@@ -829,7 +831,7 @@ export class NgD3GanttService {
 
             Blocks.selectAll('.ProgressBar')
                 .attr('opacity', b => {
-                  return this.getProgressBarOpacity(b, getWidth, this.getDuration);
+                  return this.getProgressBarOpacity(b, dateBoundary, x, this.getDuration);
                 });
 
             Blocks.selectAll('.Duration')
