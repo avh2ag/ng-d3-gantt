@@ -270,7 +270,7 @@ export function ganttChart(config) {
           .attr("x", x(new Date(date_boundary[0])))
           .attr("width", Math.abs(x(new Date(date_boundary[0])) - x(new Date(date_boundary[1]))))
           .attr("height", 40)
-          .attr('class', 'Date-Block-Outline');
+          .attr('class', 'date-block-outline');
 
 
       second_section
@@ -287,7 +287,7 @@ export function ganttChart(config) {
           })
           .attr("height", 40)
           .attr('class', function(d) {
-              return "Date-Block Date-" + moment(d.start_date).format("MMYYYY")
+              return "date-block Date-" + moment(d.start_date).format("MMYYYY")
           });
 
       second_section
@@ -306,7 +306,7 @@ export function ganttChart(config) {
               return d.name;
           })
           .attr('class', function(d) {
-              return "second-title Date Date-" + moment(d).format("MMYYYY")
+              return "date-title Date Date-" + moment(d).format("MMYYYY")
           });
 
 
@@ -459,7 +459,7 @@ export function ganttChart(config) {
                           return '#4894ff';
 
                   })
-              second_section.selectAll(".Date-Block")
+              second_section.selectAll(".date-block")
                   .style('fill', function(b, i) {
                       if (moment(b.start_date, "MM/DD/YYYY").isBetween(d.start_date, d.end_date, 'days') || moment(b.end_date, "MM/DD/YYYY").isBetween(d.start_date, d.end_date, 'days'))
                           return '#f0f6f9';
@@ -504,7 +504,7 @@ export function ganttChart(config) {
                   })
               second_section.selectAll(".Date")
                   .style('fill', '')
-              second_section.selectAll(".Date-Block")
+              second_section.selectAll(".date-block")
                   .style('fill', '')
 
               d3.select(this).each(function(d, i) {

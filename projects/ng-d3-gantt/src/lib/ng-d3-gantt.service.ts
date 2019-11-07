@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import * as d3 from 'd3';
 import { IGanttConfig, IGanttData, IGanttCycle } from './ng-d3-gantt.interface';
 import * as moment_ from 'moment';
+import { stringify } from '@angular/compiler/src/util';
 const moment = moment_;
 
 // tslint:disable: no-shadowed-variable
@@ -262,10 +263,10 @@ export class NgD3GanttService {
   private drawCurrentDayLine(rootEl, width: number, height: number, x1: number, x2: number) {
     return rootEl
       .append('line')
-      .attr('width', width)
+      .attr('width', 15)
       .attr('class', 'current-day-line')
       .attr('x1', x1)
-      .attr('x2', x2)
+      .attr('x2', x1)
       .attr('y1', 0)
       .attr('y2', height);
   }
@@ -276,7 +277,7 @@ export class NgD3GanttService {
         .attr('x', x(new Date(dateBoundary.start_date)))
         .attr('width', Math.abs(x(new Date(dateBoundary.start_date)) - x(new Date(dateBoundary.end_date))))
         .attr('height', 40)
-        .attr('class', 'Date-Block-Outline');
+        .attr('class', 'date-block-outline');
 
     timeSeries
         .append('g')
@@ -292,7 +293,7 @@ export class NgD3GanttService {
         })
         .attr('height', 40)
         .attr('class', (d: IGanttData) => {
-            return 'Date-Block Date-' + moment(d.start_date).format('MMYYYY');
+            return 'date-block Date-' + moment(d.start_date).format('MMYYYY');
         });
     timeSeries
         .append('g')
@@ -310,7 +311,7 @@ export class NgD3GanttService {
             return d.name;
         })
         .attr('class', d => {
-            return 'second-title Date Date-' + moment(d).format('MMYYYY');
+            return 'date-title date date-' + moment(d).format('MMYYYY');
         });
   }
 
@@ -341,7 +342,7 @@ export class NgD3GanttService {
       .attr('transform', 'translate(' + EmptyMessageX + ',20)');
   }
 
-  private drawFooterContainer(rootEl, posX, yFn: (idx) => number) {
+  private drawblockInfoContainer(rootEl, posX, yFn: (idx) => number) {
     return rootEl.append('g')
       .attr('transform', (d, i) => {
         let position = posX;
@@ -352,22 +353,22 @@ export class NgD3GanttService {
       });
   }
 
-  private drawFooterContent(rootEl, dateBoundary, domainFn: (d: IGanttData) => number, durationFn: (d: IGanttData) => string) {
+  private drawblockInfoContent(rootEl, dateBoundary, blockInfoTextClass: string,
+                            domainFn: (d: IGanttData) => number, durationFn: (d: IGanttData) => string) {
     // Subtitle
     rootEl.append('text')
-          .attr('class', 'TermType')
+          .attr('class', blockInfoTextClass)
           .text( (d) => {
             return d.subtitle;
           })
           .attr('opacity', (d: IGanttData) => {
             const durationOffset = this.calculateStringLengthOffset(d.subtitle);
             const width = this.getWidth(d, dateBoundary, domainFn);
-            // return Number(widthFn(d) > durationOffset);
             return Number(width > durationOffset);
           });
     // Duration
     rootEl.append('text')
-            .attr('class', 'Duration')
+            .attr('class', blockInfoTextClass)
             .attr('x', (d) => {
               return this.calculateStringLengthOffset(d.subtitle);
             })
@@ -379,16 +380,16 @@ export class NgD3GanttService {
             });
   }
 
-  private drawProgressBar(footer, dateBoundary, domainFn: (d: IGanttData) => number, durationFn: (d: IGanttData) => string ) {
+  private drawProgressBar(blockInfo, dateBoundary, domainFn: (d: IGanttData) => number, durationFn: (d: IGanttData) => string ) {
     // bar space
-    footer.append('rect')
+    blockInfo.append('rect')
         .attr('class', 'ProgressBar')
         .attr('fill', '#ddd')
         .attr('width', d => {
           return d.completion_percentage === undefined ? 0 : this.PROGRESSBAR_WIDTH;
         });
     // progressbar fill
-    footer.append('rect')
+    blockInfo.append('rect')
       .attr('class', 'ProgressBar ProgressBar-Fill')
       .attr('fill', 'red')
       .attr('width', d => {
@@ -398,7 +399,7 @@ export class NgD3GanttService {
             return ((d.completion_percentage * this.PROGRESSBAR_WIDTH) / 100);
           }
       });
-    footer.selectAll('.ProgressBar')
+    blockInfo.selectAll('.ProgressBar')
       .attr('rx', 5)
       .attr('ry', 5)
       .attr('y', -7)
@@ -461,6 +462,66 @@ export class NgD3GanttService {
       }
     }
     return { subheaderRanges, headerRanges, months}
+  }
+
+  private drawBlockContainer(rootEl, className) {
+    return rootEl
+      .append('g')
+      .attr('class', className)
+      .attr('transform', 'translate(0, 20)');
+  }
+
+  private drawBlocks(rootEl, data, domainFn: (d) => number, className: string) {
+    return rootEl.selectAll(`.${className}`)
+        .data(data)
+        .enter()
+        .append('g')
+        .attr('class', className)
+        .attr('transform', (d, i)  => {
+            return 'translate(' + domainFn(new Date(d.start_date)) + ',' + 0 + ')';
+        });
+  }
+
+  private drawBlockRectangles(rootEl, className: string, xFn: (d) => number, yFn: (d) => number) {
+    return rootEl
+        .append('rect')
+        .attr('class', className)
+        .attr('rx', 5)
+        .attr('ry', 5)
+        .attr('height', 60)
+        .attr('x', 0)
+        .attr('y', (d, i) => {
+            return yFn(i + 1);
+        })
+        .attr('width', d => {
+            return (this.getActualWidth(d, xFn) + 10);
+        });
+  }
+
+  private drawBlockContent(rootEl, className: string, dateBoundary, xFn: (d) => number) {
+    return rootEl
+      .append('g')
+      .attr('class', className)
+      .attr('transform', (d, i) => {
+        if (this.startsBefore(d, dateBoundary.start_date) && this.getIsVisible(d, dateBoundary)) {
+            const positionX = Math.abs(xFn(new Date(d.start_date)));
+            return `translate(${positionX}, 0)`;
+        } else {
+            return 'translate(0, 0)';
+        }
+      });
+  }
+
+  private drawBlockTitle(rootEl, className, yFn: (d) => number, padding: number) {
+    return rootEl.append('text')
+      .attr('class', className)
+      .attr('x', padding)
+      .attr('y', (d, i) => {
+          return (yFn(i + 1) + padding * 2);
+      })
+      .text( (d) => {
+          return d.title;
+      });
   }
 
   /* helper methods */
@@ -584,9 +645,9 @@ export class NgD3GanttService {
     return startDate + ' - ' + endDate;
   }
 
-  private trimTitle(entry: IGanttData, blockContent, width, padding) {
+  private trimTitle(entry: IGanttData, blockContent, blockTitleClass: string, width, padding) {
     // node should always  be blockContent
-    const textBlock = (blockContent).selectAll('.Title').filter((d: IGanttData) => {
+    const textBlock = (blockContent).selectAll(`.${blockTitleClass}`).filter((d: IGanttData) => {
       return d.id === entry.id;
     });
     textBlock.each((d: IGanttData, i) => {
@@ -637,7 +698,7 @@ export class NgD3GanttService {
         .tickSize(0)
         .tickPadding(6);
     /* End Axis and Dimensions */
-
+    /* Chart Background */
     const chartTitle = this.drawChartTitle(ROOT_ELEMENT, headerRanges, x, y, drawAreawidth, dateBoundary);
     const timeSeriesContainer = this.drawTimeSeriesContainer(ROOT_ELEMENT, drawAreawidth);
     this.drawTransitions(state, chartTitle, timeSeriesContainer);
@@ -660,62 +721,31 @@ export class NgD3GanttService {
     if (data.length === 0) {
       this.renderWithNoData(canvasArea, EMPTYBLOCK_WIDTH, this.EMPTYBLOCK_HEIGHT, CHART_WIDTH);
     }
-
-    const blockContainer = canvasArea
-      .append('g')
-      .attr('class', 'block-container')
-      .attr('transform', 'translate(0, 20)');
-
-    const Blocks = blockContainer.selectAll('.gantt-entry-box')
-        .data(data)
-        .enter()
-        .append('g')
-        .attr('class', 'gantt-entry-box')
-        .attr('transform', (d, i)  => {
-            return 'translate(' + x(new Date(d.start_date)) + ',' + 0 + ')';
-        });
-    const blockArea = Blocks
-        .append('rect')
-        .attr('class', 'gantt-entry-rect')
-        .attr('rx', 5)
-        .attr('ry', 5)
-        .attr('height', 60)
-        .attr('x', 0)
-        .attr('y', (d, i) => {
-            return y(i + 1);
-        })
-        .attr('width', d => {
-            return (this.getActualWidth(d, x) + 10);
-        });
-
-    const blockContent = Blocks
-        .append('g')
-        .attr('class', 'block-content')
-        .attr('transform', (d, i) => {
-          if (this.startsBefore(d, dateBoundary.start_date) && this.getIsVisible(d, dateBoundary)) {
-              const positionX = Math.abs(x(new Date(d.start_date)));
-              return `translate(${positionX}, 0)`;
-          } else {
-              return 'translate(0, 0)';
-          }
-        });
-    const title = blockContent.append('text')
-          .attr('class', 'Title')
-          .attr('x', config.box_padding)
-          .attr('y', (d, i) => {
-              return (y(i + 1) + config.box_padding * 2);
-          })
-          .text( (d) => {
-              return d.title;
-          });
-
-    /* footer content, initially hidden */
-    const footerContainer = this.drawFooterContainer(blockContent, config.box_padding, y);
-    this.drawFooterContent(footerContainer, dateBoundary, x, this.getDuration);
+    /* End Chart Background */
+    /* Block Content */
+    const blockContainerClass = 'blocks';
+    const blockContainer = this.drawBlockContainer(canvasArea, blockContainerClass);
+    const blocksClass = 'gantt-entry-box'; // abstract up
+    const Blocks = this.drawBlocks(blockContainer, data, x, blocksClass);
+    const blockRectClass = 'gantt-entry-rect';
+    const blockArea = this.drawBlockRectangles(Blocks, blockRectClass, x, y);
+    const blockContentClass = 'gantt-entry';
+    const blockContent = this.drawBlockContent(Blocks, blockContentClass, dateBoundary, x);
+    const blockTitleClass = 'block-title';
+    const blockTitle = this.drawBlockTitle(blockContent, blockTitleClass, y, config.box_padding);
+    blockContent.each( (entry: IGanttData, i) => {
+      const width = this.getWidth(entry, dateBoundary, x) + config.box_padding;
+      this.trimTitle(entry, blockContent, blockTitleClass, width, config.box_padding);
+    });
+    /* End Block Content */
+    /* blockInfo content, initially hidden */
+    const blockInfoContainer = this.drawblockInfoContainer(blockContent, config.box_padding, y);
+    const blockInfoTextClass = 'block-info-text';
+    this.drawblockInfoContent(blockInfoContainer, dateBoundary, blockInfoTextClass, x, this.getDuration);
     if (config.isShowProgressBar) {
-      this.drawProgressBar(footerContainer, dateBoundary, x, this.getDuration); // to add extra config
+      this.drawProgressBar(blockInfoContainer, dateBoundary, x, this.getDuration); // to add extra config
     }
-    /* end of footer content */
+    /* end of blockInfo content */
 
     // register reactivity
     Blocks
@@ -723,7 +753,7 @@ export class NgD3GanttService {
           config.onClick(d);
         })
         .on('mouseover', (d, i) => {
-            Blocks.selectAll('.gantt-entry')
+            Blocks.selectAll(`.${blockContentClass}`)
                 .style('opacity', (b, i) => {
                     return (d.id === b.id) ? 1 : 0.3;
                 });
@@ -736,7 +766,7 @@ export class NgD3GanttService {
                 return (d.id === b.id) ? '#4894ff' : '#d9d9d9';
               });
 
-            Blocks.selectAll('.gantt-entry-rect')
+            Blocks.selectAll(`.${blockRectClass}`)
               .style('stroke-width', b => {
                 return d.id === b.id ? 2 : 1;
               })
@@ -784,7 +814,7 @@ export class NgD3GanttService {
                     return '#4894ff';
                   }
               });
-            timeSeriesContainer.selectAll('.Date-Block')
+            timeSeriesContainer.selectAll('.date-block')
               .style('fill', (b, i) => {
                   if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
                   || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
@@ -795,7 +825,7 @@ export class NgD3GanttService {
             blockContent.filter((entry: IGanttData, i) => {
               return entry.id === d.id;
             })
-            .selectAll('.Title')
+            .selectAll(`.${blockTitleClass}`)
             .text( d => d.title );
         })
         .on('mouseout', (d, i) => {
@@ -806,7 +836,7 @@ export class NgD3GanttService {
                 .style('stroke', '#d9d9d9')
                 .style('opacity', 1);
 
-            Blocks.selectAll('.gantt-entry-rect')
+            Blocks.selectAll(`.${blockRectClass}`)
                 .attr('width', b => {
                   // replace 10 with config.box padding
                   return (this.getActualWidth(b, x) + 10);
@@ -832,19 +862,16 @@ export class NgD3GanttService {
                 });
             timeSeriesContainer.selectAll('.Date')
                 .style('fill', '');
-            timeSeriesContainer.selectAll('.Date-Block')
+            timeSeriesContainer.selectAll('.date-block')
                 .style('fill', '');
 
             blockContent.filter((entry: IGanttData, i) => {
               return entry.id === d.id;
             }).each((entry: IGanttData, i) => {
               const width = this.getWidth(entry, dateBoundary, x) + config.box_padding;
-              this.trimTitle(entry, blockContent, width, config.box_padding);
+              this.trimTitle(entry, blockContent, blockTitleClass, width, config.box_padding);
             });
         });
-    blockContent.each( (entry: IGanttData, i) => {
-      const width = this.getWidth(entry, dateBoundary, x) + config.box_padding;
-      this.trimTitle(entry, blockContent, width, config.box_padding);
-    });
+
   }
 }

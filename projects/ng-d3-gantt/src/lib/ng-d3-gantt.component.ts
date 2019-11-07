@@ -8,7 +8,7 @@ import { IGanttConfig, IGanttData } from './ng-d3-gantt.interface';
   template: `
     <button (click)="goToPrevious()">Previous</button>
     <button (click)="goToNext()">Next</button>
-    <div [id]="chartElementId">
+    <div [id]="chartElementId" class="gantt-chart">
     </div>
   `,
   styles: [],
