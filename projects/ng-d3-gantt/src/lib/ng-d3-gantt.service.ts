@@ -523,6 +523,16 @@ export class NgD3GanttService {
     return moment(node.start_date, 'MM/DD/YYYY').isBefore(dateLine);
   }
 
+  private endsAfter(node: { end_date: string | Date}, dateLine: string | Date) {
+    return moment(node.end_date, 'MM/DD/YYYY').isAfter(dateLine);
+  }
+
+  private isVisible(node: {start_date: any, end_date: any}, dateBoundary: { start_date: any, end_date: any }) {
+    const startDateVisible = moment(node.start_date, 'MM/DD/YYYY').isBetween(dateBoundary.start_date, dateBoundary.end_date, 'days');
+    const endDateVisible = moment(node.end_date, 'MM/DD/YYYY').isBetween(dateBoundary.start_date, dateBoundary.end_date, 'days');
+    return startDateVisible || endDateVisible;
+  }
+
   private getDaysRange(months) {
     const ranges: Array<IGanttCycle> = [];
     months.map((month) => {
@@ -590,7 +600,7 @@ export class NgD3GanttService {
       trimTitle(width, this, config.box_padding);
     }
     const getWidth = (node: IGanttData) => {
-      if (endsAfter(node)) {
+      if (this.endsAfter(node, dateBoundary.end_date)) {
           width = Math.abs(x(new Date(dateBoundary.end_date)) - x(new Date(node.start_date)));
       } else if (this.startsBefore(node, dateBoundary.start_date)) {
           width = Math.abs(x(new Date(dateBoundary.start_date)) - x(new Date(node.end_date)));
@@ -599,16 +609,6 @@ export class NgD3GanttService {
           width = this.getActualWidth(node, x);
       }
       return width;
-    };
-
-    const endsAfter = (node) => {
-      return moment(node.end_date, 'MM/DD/YYYY').isAfter(dateBoundary.end_date);
-    };
-
-    const isVisible = (node) => {
-      const startDateVisible = moment(node.start_date, 'MM/DD/YYYY').isBetween(dateBoundary.start_date, dateBoundary.end_date, 'days');
-      const endDateVisible = moment(node.end_date, 'MM/DD/YYYY').isBetween(dateBoundary.start_date, dateBoundary.end_date, 'days');
-      return startDateVisible || endDateVisible;
     };
 
     /* Date Info/Boundary setup */
@@ -691,7 +691,7 @@ export class NgD3GanttService {
         .append('g')
         .attr('class', 'block-content')
         .attr('transform', (d, i) => {
-          if (this.startsBefore(d, dateBoundary.start_date) && isVisible(d)) {
+          if (this.startsBefore(d, dateBoundary.start_date) && this.isVisible(d, dateBoundary)) {
               const positionX = Math.abs(x(new Date(d.start_date)));
               return `translate(${positionX}, 0)`;
           } else {
@@ -702,7 +702,7 @@ export class NgD3GanttService {
           .attr('class', 'Title')
           .attr('x', config.box_padding)
           .attr('y', (d, i) => {
-              return (y(i + 1) + 20);
+              return (y(i + 1) + config.box_padding * 2);
           })
           .text( (d) => {
               return d.title;
@@ -744,7 +744,7 @@ export class NgD3GanttService {
                 })
                 .attr('width', b => {
                     if (d.id === b.id) {
-                      if (this.startsBefore(d, dateBoundary.start_date) || endsAfter(d)) {
+                      if (this.startsBefore(d, dateBoundary.start_date) || this.endsAfter(d, dateBoundary.end_date)) {
                           if (getWidth(b) < 500) {
                             // replace this 10 with config.box padding
                             return (this.getActualWidth(b, x) + (500 - getWidth(b)) + 10);
