@@ -432,6 +432,54 @@ export class NgD3GanttService {
         return this.getProgressBarOpacity(d, widthFn, durationFn);
       });
   }
+
+  private getDateInfo(config: IGanttConfig) {
+    let subheaderRanges: Array<IGanttCycle> = [];
+    let months = [];
+    let headerRanges = [];
+
+    /* Setup Date Boundary */
+    if (config.metrics.type === 'monthly') {
+      months = [config.metrics.month];
+      headerRanges = this.getMonthsRange(months);
+      subheaderRanges = this.getDaysRange(months);
+    } else if (config.metrics.type === 'overall') {
+      const years = config.metrics.years;
+      const yearsRange = [];
+      years.map( year => {
+          months = months.concat(this.getMonthsOftheYear(year));
+          yearsRange.push(this.getYearBoundary(year));
+      });
+      headerRanges = [{
+          name: 'Overall View',
+          start_date: yearsRange[0].start_date,
+          end_date: yearsRange[yearsRange.length - 1].end_date,
+      }];
+      subheaderRanges = yearsRange;
+
+    } else {
+      if (config.metrics.type === 'quarterly') {
+        months = config.metrics.months;
+        subheaderRanges = this.getMonthsRange(months);
+        const year = moment(config.metrics.months[0], 'MMMM YYYY').format('YYYY');
+        headerRanges = [{
+            start_date: moment(config.metrics.months[0], 'MMMM YYYY').startOf('month').toDate(),
+            end_date: moment(config.metrics.months[config.metrics.months.length - 1], 'MMMM YYYY').endOf('month').toDate(),
+            name: year,
+        }];
+      } else if (config.metrics.type === 'yearly') {
+        months = this.getMonthsOftheYear(config.metrics.year);
+        subheaderRanges = this.getMonthsRange(months);
+        headerRanges = [this.getYearBoundary(config.metrics.year)];
+      } else if (config.metrics.type === 'sprint') {
+        months = this.getMonthsOftheYear(config.metrics.year);
+        subheaderRanges = config.metrics.cycles;
+        headerRanges = [this.getYearBoundary(config.metrics.year)];
+      }
+    }
+    return { subheaderRanges, headerRanges, months}
+  }
+
   /* helper methods */
   private getProgressBarOpacity(d: IGanttData, widthFn: (d: IGanttData) => number, durationFn: (d: IGanttData) => string): number {
     const previousTextWidth = this.calculateStringLengthOffset(d.subtitle)
@@ -460,11 +508,10 @@ export class NgD3GanttService {
     return months;
   }
 
-  private getActualWidth(node: { start_date: string | Date, end_date: string | Date },
-                         domainFn: (d) => number, transformFn?: (d) => any) {
+  private getActualWidth(node: { start_date: string | Date, end_date: string | Date }, domainFn: (d) => number, transformFn?: (d) => any) {
     if (!transformFn) {
-        transformFn = (d) => new Date(d);
-      }
+      transformFn = (d) => new Date(d);
+    }
     return this.getDomainDistance(transformFn(node.end_date), transformFn(node.start_date), domainFn);
   }
 
@@ -476,16 +523,63 @@ export class NgD3GanttService {
     return moment(node.start_date, 'MM/DD/YYYY').isBefore(dateLine);
   }
 
+  private getDaysRange(months) {
+    const ranges: Array<IGanttCycle> = [];
+    months.map((month) => {
+        const startOfMonth = moment(month, 'MMM YYYY').startOf('month');
+        const endOfMonth = moment(month, 'MMM YYYY').endOf('month');
+        let day = startOfMonth;
+
+        while (day <= endOfMonth) {
+            ranges.push({
+                name: moment(day).format('DD'),
+                start_date: day.toDate(),
+                end_date: day.clone().add(1, 'd').toDate(),
+            });
+            day = day.clone().add(1, 'd');
+        }
+      });
+    return ranges;
+  }
+
+  private getMonthsRange(months) {
+    const ranges = [];
+    months.map(month => {
+      const startOfMonth = moment(month, 'MMM YYYY').startOf('month');
+      const endOfMonth = moment(month, 'MMM YYYY').endOf('month');
+      ranges.push({
+          name: moment(startOfMonth).format('MMMM'),
+          start_date: startOfMonth.toDate(),
+          end_date: endOfMonth.clone().add(1, 'd').toDate(),
+      });
+    });
+    return ranges;
+  }
+
+  private getYearBoundary(year) {
+    const yearDate = moment(year, 'YYYY');
+    const startOfYear = moment(yearDate).startOf('year');
+    const endOfYear = moment(yearDate).endOf('year');
+    return {
+        name: year,
+        start_date: startOfYear.toDate(),
+        end_date: endOfYear.toDate(),
+    };
+  }
+
   /* end helper methods */
 
   public draw(state: string, data: Array<IGanttData>, config: IGanttConfig, elementId: string) {
-    let dateBoundary: { start_date: Date | string, end_date: Date | string} = null;
+    const dateBoundary: { start_date: Date | string, end_date: Date | string} = {
+      start_date: '',
+      end_date: ''
+    };
     const ROOT_ELEMENT = d3.select(`#${elementId}`);
     const CHART_WIDTH = ROOT_ELEMENT._groups[0][0].offsetWidth;
     const EMPTYBLOCK_WIDTH = ((80 * CHART_WIDTH) / 100);
     const CHART_HEIGHT = d3.max([((data.length * 80) + 100), 300]);
 
-    /* Inline functions from initial implementation */
+    /* Inline functions from initial implementation, needed to preserve element level this */
     function hoistedTrimTitle(d: IGanttData, i: number) {
       const padding = 10;
       const width = getWidth(d) + padding;
@@ -507,10 +601,6 @@ export class NgD3GanttService {
       return width;
     };
 
-    const startsBefore = (node) => {
-      return moment(node.start_date, 'MM/DD/YYYY').isBefore(dateBoundary.start_date);
-    };
-
     const endsAfter = (node) => {
       return moment(node.end_date, 'MM/DD/YYYY').isAfter(dateBoundary.end_date);
     };
@@ -521,105 +611,16 @@ export class NgD3GanttService {
       return startDateVisible || endDateVisible;
     };
 
-    const getDaysRange = (months) => {
-      const ranges: Array<IGanttCycle> = [];
-      months.map((month) => {
-          const startOfMonth = moment(month, 'MMM YYYY').startOf('month');
-          const endOfMonth = moment(month, 'MMM YYYY').endOf('month');
-          let day = startOfMonth;
-
-          while (day <= endOfMonth) {
-              ranges.push({
-                  name: moment(day).format('DD'),
-                  start_date: day.toDate(),
-                  end_date: day.clone().add(1, 'd').toDate(),
-              });
-              day = day.clone().add(1, 'd');
-          }
-        });
-      return ranges;
-    };
-
-    const getMonthsRange = (months) => {
-        const ranges = [];
-        months.map(month => {
-          const startOfMonth = moment(month, 'MMM YYYY').startOf('month');
-          const endOfMonth = moment(month, 'MMM YYYY').endOf('month');
-          ranges.push({
-              name: moment(startOfMonth).format('MMMM'),
-              start_date: startOfMonth.toDate(),
-              end_date: endOfMonth.clone().add(1, 'd').toDate(),
-          });
-        });
-
-        return ranges;
-    };
-
-    const getYearBoundary = (year) => {
-      const yearDate = moment(year, 'YYYY');
-      const startOfYear = moment(yearDate).startOf('year');
-      const endOfYear = moment(yearDate).endOf('year');
-      return {
-          name: year,
-          start_date: startOfYear.toDate(),
-          end_date: endOfYear.toDate(),
-      };
-    };
-
-    dateBoundary = {
-      start_date: '',
-      end_date: ''
-    };
-    let subheaderRanges: Array<IGanttCycle> = [];
-    let months = [];
-    let headerRanges = [];
-
-    /* Setup Date Boundary */
-    if (config.metrics.type === 'monthly') {
-        months = [config.metrics.month];
-        headerRanges = getMonthsRange(months);
-        subheaderRanges = getDaysRange(months);
-    } else if (config.metrics.type === 'overall') {
-        const years = config.metrics.years;
-        const yearsRange = [];
-        years.map( year => {
-            months = months.concat(this.getMonthsOftheYear(year));
-            yearsRange.push(getYearBoundary(year));
-        });
-        headerRanges = [{
-            name: 'Overall View',
-            start_date: yearsRange[0].start_date,
-            end_date: yearsRange[yearsRange.length - 1].end_date,
-        }];
-        subheaderRanges = yearsRange;
-
-    } else {
-        if (config.metrics.type === 'quarterly') {
-            months = config.metrics.months;
-            subheaderRanges = getMonthsRange(months);
-            const year = moment(config.metrics.months[0], 'MMMM YYYY').format('YYYY');
-
-            headerRanges = [{
-                start_date: moment(config.metrics.months[0], 'MMMM YYYY').startOf('month').toDate(),
-                end_date: moment(config.metrics.months[config.metrics.months.length - 1], 'MMMM YYYY').endOf('month').toDate(),
-                name: year,
-            }];
-
-        } else if (config.metrics.type === 'yearly') {
-            months = this.getMonthsOftheYear(config.metrics.year);
-            subheaderRanges = getMonthsRange(months);
-            headerRanges = [getYearBoundary(config.metrics.year)];
-        } else if (config.metrics.type === 'sprint') {
-            months = this.getMonthsOftheYear(config.metrics.year);
-            subheaderRanges = config.metrics.cycles;
-            headerRanges = [getYearBoundary(config.metrics.year)];
-
-        }
-    }
+    /* Date Info/Boundary setup */
+    const dateInfo: { subheaderRanges: Array<any>, months: Array<string>, headerRanges: Array<any> } = this.getDateInfo(config);
+    const months = dateInfo.months;
+    const subheaderRanges = dateInfo.subheaderRanges;
+    const headerRanges = dateInfo.headerRanges;
 
     dateBoundary.start_date = moment(months[0], 'MMM YYYY').startOf('month').toDate();
     dateBoundary.end_date = moment(months[months.length - 1], 'MMM YYYY').endOf('month').toDate();
-    /* End DateBoundary Setup */
+    /* End Date Info/Boundary Setup */
+
     /* Axis and Dimensions */
     let width = d3.max([CHART_WIDTH, 400]) - this.margin.left - this.margin.right;
     const height = CHART_HEIGHT - this.margin.top - this.margin.bottom;
@@ -690,7 +691,7 @@ export class NgD3GanttService {
         .append('g')
         .attr('class', 'block-content')
         .attr('transform', (d, i) => {
-          if (startsBefore(d) && isVisible(d)) {
+          if (this.startsBefore(d, dateBoundary.start_date) && isVisible(d)) {
               const positionX = Math.abs(x(new Date(d.start_date)));
               return `translate(${positionX}, 0)`;
           } else {
@@ -743,7 +744,7 @@ export class NgD3GanttService {
                 })
                 .attr('width', b => {
                     if (d.id === b.id) {
-                      if (startsBefore(d) || endsAfter(d)) {
+                      if (this.startsBefore(d, dateBoundary.start_date) || endsAfter(d)) {
                           if (getWidth(b) < 500) {
                             // replace this 10 with config.box padding
                             return (this.getActualWidth(b, x) + (500 - getWidth(b)) + 10);
