@@ -107,7 +107,7 @@ export class NgD3GanttService {
       }));
   }
 
-  private drawChartTitle(rootEl, headerRanges, x, y, width: number, widthFn: (d) => number) {
+  private drawChartTitle(rootEl, headerRanges, x, y, width: number, dateBoundary) {
     const chartTitle = rootEl
       .append('div')
       .attr('class', 'graph first_section')
@@ -117,20 +117,20 @@ export class NgD3GanttService {
       .attr('height', 40)
       .append('g');
     chartTitle.selectAll('.bar')
-    .data(headerRanges)
-    .enter().append('text')
-    .attr('class', 'first-title')
-    .attr('y', -5)
-    .attr('x', (d: IGanttData) => {
-        return x(new Date(d.start_date)) + (widthFn(d) / 2);
-    })
-    .attr('width', (d: IGanttData) => {
-        return widthFn(d);
-    })
-    .attr('height', y.bandwidth())
-    .text( d => {
-      return d.name;
-    });
+      .data(headerRanges)
+      .enter().append('text')
+      .attr('class', 'first-title')
+      .attr('y', -5)
+      .attr('x', (d: IGanttData) => {
+        return x(new Date(d.start_date)) + (this.getWidth(d, dateBoundary, x) / 2);
+      })
+      .attr('width', (d: IGanttData) => {
+        return this.getWidth(d, dateBoundary, x);
+      })
+      .attr('height', y.bandwidth())
+      .text( d => {
+        return d.name;
+      });
     return chartTitle;
   }
 
@@ -270,7 +270,7 @@ export class NgD3GanttService {
       .attr('y2', height);
   }
 
-  private drawTimeSeries(timeSeries, dateBoundary, subheaderRanges, x: any, widthFn: (d) => number) {
+  private drawTimeSeries(timeSeries, dateBoundary, subheaderRanges, x: any) {
     timeSeries
         .append('rect')
         .attr('x', x(new Date(dateBoundary.start_date)))
@@ -285,10 +285,10 @@ export class NgD3GanttService {
         .enter()
         .append('rect')
         .attr('x', (d: IGanttData) => {
-            return x(new Date(d.start_date));
+          return x(new Date(d.start_date));
         })
         .attr('width', (d: IGanttData) => {
-            return widthFn(d);
+          return this.getWidth(d, dateBoundary, x);
         })
         .attr('height', 40)
         .attr('class', (d: IGanttData) => {
@@ -303,7 +303,7 @@ export class NgD3GanttService {
             return (x(new Date(d.start_date)) + 10);
         })
         .attr('width', (d: IGanttData) => {
-            return widthFn(d);
+            return this.getWidth(d, dateBoundary, x);
         })
         .attr('y', 25)
         .text( d => {
@@ -352,7 +352,7 @@ export class NgD3GanttService {
       });
   }
 
-  private drawFooterContent(rootEl, widthFn: (d: IGanttData) => number, durationFn: (d: IGanttData) => string) {
+  private drawFooterContent(rootEl, dateBoundary, domainFn: (d: IGanttData) => number, durationFn: (d: IGanttData) => string) {
     // Subtitle
     rootEl.append('text')
           .attr('class', 'TermType')
@@ -361,7 +361,9 @@ export class NgD3GanttService {
           })
           .attr('opacity', (d: IGanttData) => {
             const durationOffset = this.calculateStringLengthOffset(d.subtitle);
-            return Number(widthFn(d) > durationOffset);
+            const width = this.getWidth(d, dateBoundary, domainFn);
+            // return Number(widthFn(d) > durationOffset);
+            return Number(width > durationOffset);
           });
     // Duration
     rootEl.append('text')
@@ -373,7 +375,7 @@ export class NgD3GanttService {
               return `${durationFn(d)}`;
             })
             .attr('opacity', d => {
-              return this.getDurationOpacity(d, widthFn);
+              return this.getDurationOpacity(d, dateBoundary, domainFn);
             });
   }
 
@@ -469,9 +471,10 @@ export class NgD3GanttService {
     return Number(widthFn(d) > previousTextWidth);
   }
 
-  private getDurationOpacity(d: IGanttData, widthFn: (d: IGanttData) => number) {
+  private getDurationOpacity(d: IGanttData, dateBoundary, domainFn: (d: IGanttData) => number) {
     const durationOffset = this.calculateStringLengthOffset(d.subtitle);
-    return Number(widthFn(d) > durationOffset);
+    const width = this.getWidth(d, dateBoundary, domainFn);
+    return Number(width > durationOffset);
   }
 
   private calculateStringLengthOffset(text: string) {
@@ -489,15 +492,29 @@ export class NgD3GanttService {
     return months;
   }
 
-  private getActualWidth(node: { start_date: string | Date, end_date: string | Date }, domainFn: (d) => number, transformFn?: (d) => any) {
+  private getWidth(node: IGanttData, dateBoundary, domainFn: (d) => number) {
+    let width = 0;
+    if (this.endsAfter(node, dateBoundary.end_date)) {
+      // width = Math.abs(x(new Date(dateBoundary.end_date)) - x(new Date(node.start_date)));
+      width = this.getDomainDistance(dateBoundary.end_date, node.start_date, domainFn);
+    } else if (this.startsBefore(node, dateBoundary.start_date)) {
+        width = Math.abs(domainFn(new Date(dateBoundary.start_date)) - domainFn(new Date(node.end_date)));
+        // width = this.getDomainDistance()
+    } else {
+        width = this.getActualWidth(node, domainFn);
+    }
+    return width;
+  }
+
+  private getActualWidth(node: { start_date: string | Date, end_date: string | Date }, domainFn: (d) => number) {
+    return this.getDomainDistance(node.end_date, node.start_date, domainFn);
+  }
+
+  private getDomainDistance(point0: any, point1: any, domainFn: (d) => number, transformFn?: (d) => any ) {
     if (!transformFn) {
       transformFn = (d) => new Date(d);
     }
-    return this.getDomainDistance(transformFn(node.end_date), transformFn(node.start_date), domainFn);
-  }
-
-  private getDomainDistance(point0: any, point1: any, domainFn: (d) => number ) {
-    return Math.abs( domainFn(point0) - domainFn(point1) );
+    return Math.abs( domainFn( transformFn(point0) ) - domainFn( transformFn(point1) ) );
   }
 
   private startsBefore(node: { start_date: string | Date}, dateLine: string | Date ) {
@@ -631,7 +648,7 @@ export class NgD3GanttService {
         .tickPadding(6);
     /* End Axis and Dimensions */
 
-    const chartTitle = this.drawChartTitle(ROOT_ELEMENT, headerRanges, x, y, width, getWidth);
+    const chartTitle = this.drawChartTitle(ROOT_ELEMENT, headerRanges, x, y, width, dateBoundary);
     const timeSeriesContainer = this.drawTimeSeriesContainer(ROOT_ELEMENT, width);
     this.drawTransitions(state, chartTitle, timeSeriesContainer);
 
@@ -648,7 +665,7 @@ export class NgD3GanttService {
       x(new Date(this.currentDay.start_date)),
       x(new Date(this.currentDay.start_date)));
 
-    this.drawTimeSeries(timeSeriesContainer, dateBoundary, subheaderRanges, x, getWidth);
+    this.drawTimeSeries(timeSeriesContainer, dateBoundary, subheaderRanges, x);
 
     if (data.length === 0) {
       this.renderWithNoData(canvasArea, EMPTYBLOCK_WIDTH, this.EMPTYBLOCK_HEIGHT, CHART_WIDTH);
@@ -704,7 +721,7 @@ export class NgD3GanttService {
 
     /* footer content, initially hidden */
     const footerContainer = this.drawFooterContainer(blockContent, config.box_padding, y);
-    this.drawFooterContent(footerContainer, getWidth, this.getDuration);
+    this.drawFooterContent(footerContainer, dateBoundary, x, this.getDuration);
     if (config.isShowProgressBar) {
       this.drawProgressBar(footerContainer, getWidth, this.getDuration); // to add extra config
     }
@@ -760,7 +777,7 @@ export class NgD3GanttService {
                   if (b.id === d.id) {
                     return 1;
                   } else {
-                    return this.getDurationOpacity(b, getWidth);
+                    return this.getDurationOpacity(b, dateBoundary, x);
                   }
                 });
 
@@ -818,7 +835,7 @@ export class NgD3GanttService {
             Blocks.selectAll('.Duration')
                 .attr('opacity', b => {
                   if (d.id === b.id) {
-                    return this.getDurationOpacity(b, getWidth);
+                    return this.getDurationOpacity(b, dateBoundary, x);
                   }
                 });
 
