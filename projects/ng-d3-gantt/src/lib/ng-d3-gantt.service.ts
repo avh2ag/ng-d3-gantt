@@ -3,6 +3,7 @@ import * as d3 from 'd3';
 import { IGanttConfig, IGanttData, IGanttCycle } from './ng-d3-gantt.interface';
 import * as moment_ from 'moment';
 import { stringify } from '@angular/compiler/src/util';
+import { config } from 'rxjs';
 const moment = moment_;
 
 // tslint:disable: no-shadowed-variable
@@ -27,7 +28,7 @@ export class NgD3GanttService {
       start_date: moment().startOf('day').toDate(),
       end_date: moment().endOf('day').toDate()
     };
-    this.margin = { top: 20, right: 50, bottom: 100, left: 50 };
+    this.margin = { top: 20, right: 0, bottom: 100, left: 0 };
   }
 
   public clearChart(containerId: string) {
@@ -189,14 +190,14 @@ export class NgD3GanttService {
       .attr('height', height + this.margin.top + this.margin.bottom);
   }
 
-  private drawStartLines(rootEl, data: Array<IGanttData>, x: any, y: any) {
+  private drawStartLines(rootEl, className: string, data: Array<IGanttData>, x: any, y: any) {
     return rootEl.append('g')
     .attr('transform', 'translate(' + this.margin.left + ',' + 0 + ')')
-    .selectAll('.start-lines')
+    .selectAll(`.${className}`)
       .data(data)
       .enter()
       .append('line')
-      .attr('class', 'start-lines')
+      .attr('class', className)
       .attr('stroke', (d: IGanttData) => {
         // return d.color;
         return '#d9d9d9';
@@ -242,7 +243,7 @@ export class NgD3GanttService {
     const lines = rootEl
     .append('g')
     .attr('class', 'lines')
-    .attr('transform', 'translate(0,0)');
+    .attr('transform', `translate(${this.margin.right},0)`);
     // add a toggle here
     lines.selectAll('.lines')
       .data(subheaderRanges)
@@ -276,7 +277,7 @@ export class NgD3GanttService {
         .append('rect')
         .attr('x', x(new Date(dateBoundary.start_date)))
         .attr('width', Math.abs(x(new Date(dateBoundary.start_date)) - x(new Date(dateBoundary.end_date))))
-        .attr('height', 40)
+        .attr('height', 40) // need to make header height configurable
         .attr('class', 'date-block-outline');
 
     timeSeries
@@ -301,14 +302,14 @@ export class NgD3GanttService {
         .data(subheaderRanges)
         .enter().append('text')
         .attr('x', d => {
-            return (x(new Date(d.start_date)) + 10);
+          return (x(new Date(d.start_date)) + 10);
         })
         .attr('width', (d: IGanttData) => {
-            return this.getWidth(d, dateBoundary, x);
+          return this.getWidth(d, dateBoundary, x);
         })
-        .attr('y', 25)
+        .attr('y', 25) // make this part of config as well, lower pri
         .text( d => {
-            return d.name;
+          return d.name;
         })
         .attr('class', d => {
             return 'date-title date date-' + moment(d).format('MMYYYY');
@@ -354,7 +355,7 @@ export class NgD3GanttService {
   }
 
   private drawblockInfoContent(rootEl, dateBoundary, blockInfoTextClass: string,
-                            domainFn: (d: IGanttData) => number, durationFn: (d: IGanttData) => string) {
+                               domainFn: (d: IGanttData) => number, durationFn: (d: IGanttData) => string) {
     // Subtitle
     rootEl.append('text')
           .attr('class', blockInfoTextClass)
@@ -461,7 +462,7 @@ export class NgD3GanttService {
         headerRanges = [this.getYearBoundary(config.metrics.year)];
       }
     }
-    return { subheaderRanges, headerRanges, months}
+    return { subheaderRanges, headerRanges, months };
   }
 
   private drawBlockContainer(rootEl, className) {
@@ -540,8 +541,9 @@ export class NgD3GanttService {
     return Number(width > durationOffset);
   }
 
+  // this entire method is wonky and broken
   private calculateStringLengthOffset(text: string) {
-    const fontSizeOffset = 6.5;
+    const fontSizeOffset = 6.5; // this is goofy, need to convert string length to d3 domain units
     const paddingRight = 5;
     return text.length * fontSizeOffset + paddingRight;
   }
@@ -619,7 +621,7 @@ export class NgD3GanttService {
       const startOfMonth = moment(month, 'MMM YYYY').startOf('month');
       const endOfMonth = moment(month, 'MMM YYYY').endOf('month');
       ranges.push({
-          name: moment(startOfMonth).format('MMMM'),
+          name: moment(startOfMonth).format('MMM'),
           start_date: startOfMonth.toDate(),
           end_date: endOfMonth.clone().add(1, 'd').toDate(),
       });
@@ -704,7 +706,8 @@ export class NgD3GanttService {
     this.drawTransitions(state, chartTitle, timeSeriesContainer);
 
     const canvasArea = this.drawCanvasArea(ROOT_ELEMENT, height, drawAreawidth);
-    const startLines = this.drawStartLines(canvasArea, data, x, y);
+    const startLineClassName = 'start-lines';
+    const startLines = this.drawStartLines(canvasArea, startLineClassName, data, x, y);
     const endLines = this.drawEndLines(canvasArea, data, x, y);
     if (config.isShowGridlines) {
       this.drawGridLines(canvasArea, subheaderRanges, x, height);
@@ -758,7 +761,7 @@ export class NgD3GanttService {
                     return (d.id === b.id) ? 1 : 0.3;
                 });
 
-            canvasArea.selectAll('.start-lines, .end-lines')
+            canvasArea.selectAll(`.${startLineClassName}, .end-lines`)
               .style('stroke-width', (b, i) => {
                   return (d.id === b.id) ? 3 : 2;
               })
@@ -829,9 +832,9 @@ export class NgD3GanttService {
             .text( d => d.title );
         })
         .on('mouseout', (d, i) => {
-            Blocks.selectAll('.gantt-entry')
+            Blocks.selectAll(`.${blockContentClass}`)
                 .style('opacity', 1);
-            canvasArea.selectAll('.start-lines, .end-lines')
+            canvasArea.selectAll(`.${startLineClassName}, .end-lines`)
                 .style('stroke-width', 2)
                 .style('stroke', '#d9d9d9')
                 .style('opacity', 1);
