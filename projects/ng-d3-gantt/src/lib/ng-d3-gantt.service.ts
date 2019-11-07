@@ -4,25 +4,6 @@ import { IGanttConfig, IGanttData, IGanttCycle } from './ng-d3-gantt.interface';
 import * as moment_ from 'moment';
 const moment = moment_;
 
-// functions that need to be hoisted to play nicely
-function getDuration(d: IGanttData) {
-  const startDate = moment(d.start_date, 'MM/DD/YYYY').format('DD MMM');
-  const endDate = moment(d.end_date, 'MM/DD/YYYY').format('DD MMM');
-  return startDate + ' - ' + endDate;
-}
-
-function trimTitle(width, node, padding) {
-  const textBlock = d3.select(node).select('.Title');
-  let textLength = textBlock.node().getComputedTextLength();
-  let text = textBlock.text();
-  while (textLength > (width - padding) && text.length > 0) {
-      text = text.slice(0, -1);
-      textBlock.text(text + '...');
-      textLength = textBlock.node().getComputedTextLength();
-  }
-}
-
-
 // tslint:disable: no-shadowed-variable
 @Injectable({
   providedIn: 'root'
@@ -527,7 +508,7 @@ export class NgD3GanttService {
     return moment(node.end_date, 'MM/DD/YYYY').isAfter(dateLine);
   }
 
-  private isVisible(node: {start_date: any, end_date: any}, dateBoundary: { start_date: any, end_date: any }) {
+  private getIsVisible(node: {start_date: any, end_date: any}, dateBoundary: { start_date: any, end_date: any }) {
     const startDateVisible = moment(node.start_date, 'MM/DD/YYYY').isBetween(dateBoundary.start_date, dateBoundary.end_date, 'days');
     const endDateVisible = moment(node.end_date, 'MM/DD/YYYY').isBetween(dateBoundary.start_date, dateBoundary.end_date, 'days');
     return startDateVisible || endDateVisible;
@@ -577,6 +558,29 @@ export class NgD3GanttService {
     };
   }
 
+  // functions that need to be hoisted to play nicely
+  private getDuration(d: IGanttData) {
+    const startDate = moment(d.start_date, 'MM/DD/YYYY').format('DD MMM');
+    const endDate = moment(d.end_date, 'MM/DD/YYYY').format('DD MMM');
+    return startDate + ' - ' + endDate;
+  }
+
+  private trimTitle(entry: IGanttData, blockContent, width, padding) {
+    // node should always  be blockContent
+    const textBlock = (blockContent).selectAll('.Title').filter((d: IGanttData) => {
+      return d.id === entry.id;
+    });
+    textBlock.each((d: IGanttData, i) => {
+      let textLength = textBlock.node().getComputedTextLength();
+      let text = textBlock.text();
+      while (textLength > (width - padding) && text.length > 0) {
+        text = text.slice(0, -1);
+        textBlock.text(text + '...');
+        textLength = textBlock.node().getComputedTextLength();
+      }
+    });
+  }
+
   /* end helper methods */
 
   public draw(state: string, data: Array<IGanttData>, config: IGanttConfig, elementId: string) {
@@ -589,16 +593,6 @@ export class NgD3GanttService {
     const EMPTYBLOCK_WIDTH = ((80 * CHART_WIDTH) / 100);
     const CHART_HEIGHT = d3.max([((data.length * 80) + 100), 300]);
 
-    /* Inline functions from initial implementation, needed to preserve element level this */
-    function hoistedTrimTitle(d: IGanttData, i: number) {
-      const padding = 10;
-      const width = getWidth(d) + padding;
-      trimTitle(width, this, padding);
-    }
-    function hoistedExpandedTitle(d: IGanttData, i: number) {
-      const width = Math.max(getWidth(d), 500) + config.box_padding;
-      trimTitle(width, this, config.box_padding);
-    }
     const getWidth = (node: IGanttData) => {
       if (this.endsAfter(node, dateBoundary.end_date)) {
           width = Math.abs(x(new Date(dateBoundary.end_date)) - x(new Date(node.start_date)));
@@ -691,7 +685,7 @@ export class NgD3GanttService {
         .append('g')
         .attr('class', 'block-content')
         .attr('transform', (d, i) => {
-          if (this.startsBefore(d, dateBoundary.start_date) && this.isVisible(d, dateBoundary)) {
+          if (this.startsBefore(d, dateBoundary.start_date) && this.getIsVisible(d, dateBoundary)) {
               const positionX = Math.abs(x(new Date(d.start_date)));
               return `translate(${positionX}, 0)`;
           } else {
@@ -710,9 +704,9 @@ export class NgD3GanttService {
 
     /* footer content, initially hidden */
     const footerContainer = this.drawFooterContainer(blockContent, config.box_padding, y);
-    this.drawFooterContent(footerContainer, getWidth, getDuration);
+    this.drawFooterContent(footerContainer, getWidth, this.getDuration);
     if (config.isShowProgressBar) {
-      this.drawProgressBar(footerContainer, getWidth, getDuration); // to add extra config
+      this.drawProgressBar(footerContainer, getWidth, this.getDuration); // to add extra config
     }
     /* end of footer content */
 
@@ -795,7 +789,10 @@ export class NgD3GanttService {
             })
             .selectAll('.Title')
             .text( d => d.title );
-            blockContent.each( hoistedExpandedTitle );
+            // blockContent.each( (entry: IGanttData, i) => {
+            //   const width = Math.max(getWidth(d), 500) + config.box_padding;
+            //   this.trimTitle(entry, blockContent, width, config.box_padding);
+            // });
         })
         .on('mouseout', (d, i) => {
             Blocks.selectAll('.gantt-entry')
@@ -815,7 +812,7 @@ export class NgD3GanttService {
 
             Blocks.selectAll('.ProgressBar')
                 .attr('opacity', b => {
-                  return this.getProgressBarOpacity(b, getWidth, getDuration);
+                  return this.getProgressBarOpacity(b, getWidth, this.getDuration);
                 });
 
             Blocks.selectAll('.Duration')
@@ -836,8 +833,14 @@ export class NgD3GanttService {
 
             blockContent.filter((entry: IGanttData, i) => {
               return entry.id === d.id;
-            }).each(hoistedTrimTitle);
+            }).each((entry: IGanttData, i) => {
+              const width = getWidth(entry) + config.box_padding;
+              this.trimTitle(entry, blockContent, width, config.box_padding);
+            });
         });
-    blockContent.each(hoistedTrimTitle);
+    blockContent.each( (entry: IGanttData, i) => {
+      const width = getWidth(entry) + config.box_padding;
+      this.trimTitle(entry, blockContent, width, config.box_padding);
+    });
   }
 }
