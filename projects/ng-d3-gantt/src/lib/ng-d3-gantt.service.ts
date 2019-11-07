@@ -111,9 +111,9 @@ export class NgD3GanttService {
     return config;
   }
 
-  private getXScale(width: number, dateBoundary: Array<any>) {
+  private getXScale(width: number, dateBoundary: { start_date: string | Date, end_date: string | Date }) {
     return d3.scaleTime()
-      .domain(dateBoundary)
+      .domain([dateBoundary.start_date, dateBoundary.end_date])
       .range([0, width]);
   }
 
@@ -292,8 +292,8 @@ export class NgD3GanttService {
   private drawTimeSeries(timeSeries, dateBoundary, subheaderRanges, x: any, widthFn: (d) => number) {
     timeSeries
         .append('rect')
-        .attr('x', x(new Date(dateBoundary[0])))
-        .attr('width', Math.abs(x(new Date(dateBoundary[0])) - x(new Date(dateBoundary[1]))))
+        .attr('x', x(new Date(dateBoundary.start_date)))
+        .attr('width', Math.abs(x(new Date(dateBoundary.start_date)) - x(new Date(dateBoundary.end_date))))
         .attr('height', 40)
         .attr('class', 'Date-Block-Outline');
 
@@ -472,10 +472,14 @@ export class NgD3GanttService {
     return Math.abs( domainFn(point0) - domainFn(point1) );
   }
 
+  private startsBefore(node: { start_date: string | Date}, dateLine: string | Date ) {
+    return moment(node.start_date, 'MM/DD/YYYY').isBefore(dateLine);
+  }
+
   /* end helper methods */
 
   public draw(state: string, data: Array<IGanttData>, config: IGanttConfig, elementId: string) {
-    let dateBoundary = [];
+    let dateBoundary: { start_date: Date | string, end_date: Date | string} = null;
     const ROOT_ELEMENT = d3.select(`#${elementId}`);
     const CHART_WIDTH = ROOT_ELEMENT._groups[0][0].offsetWidth;
     const EMPTYBLOCK_WIDTH = ((80 * CHART_WIDTH) / 100);
@@ -493,9 +497,9 @@ export class NgD3GanttService {
     }
     const getWidth = (node: IGanttData) => {
       if (endsAfter(node)) {
-          width = Math.abs(x(new Date(dateBoundary[1])) - x(new Date(node.start_date)));
-      } else if (startsBefore(node)) {
-          width = Math.abs(x(new Date(dateBoundary[0])) - x(new Date(node.end_date)));
+          width = Math.abs(x(new Date(dateBoundary.end_date)) - x(new Date(node.start_date)));
+      } else if (this.startsBefore(node, dateBoundary.start_date)) {
+          width = Math.abs(x(new Date(dateBoundary.start_date)) - x(new Date(node.end_date)));
           // width = this.getDomainDistance()
       } else {
           width = this.getActualWidth(node, x);
@@ -504,16 +508,16 @@ export class NgD3GanttService {
     };
 
     const startsBefore = (node) => {
-      return moment(node.start_date, 'MM/DD/YYYY').isBefore(dateBoundary[0]);
+      return moment(node.start_date, 'MM/DD/YYYY').isBefore(dateBoundary.start_date);
     };
 
     const endsAfter = (node) => {
-      return moment(node.end_date, 'MM/DD/YYYY').isAfter(dateBoundary[1]);
+      return moment(node.end_date, 'MM/DD/YYYY').isAfter(dateBoundary.end_date);
     };
 
     const isVisible = (node) => {
-      const startDateVisible = moment(node.start_date, 'MM/DD/YYYY').isBetween(dateBoundary[0], dateBoundary[1], 'days');
-      const endDateVisible = moment(node.end_date, 'MM/DD/YYYY').isBetween(dateBoundary[0], dateBoundary[1], 'days');
+      const startDateVisible = moment(node.start_date, 'MM/DD/YYYY').isBetween(dateBoundary.start_date, dateBoundary.end_date, 'days');
+      const endDateVisible = moment(node.end_date, 'MM/DD/YYYY').isBetween(dateBoundary.start_date, dateBoundary.end_date, 'days');
       return startDateVisible || endDateVisible;
     };
 
@@ -562,7 +566,10 @@ export class NgD3GanttService {
       };
     };
 
-    dateBoundary = [];
+    dateBoundary = {
+      start_date: '',
+      end_date: ''
+    };
     let subheaderRanges: Array<IGanttCycle> = [];
     let months = [];
     let headerRanges = [];
@@ -610,8 +617,8 @@ export class NgD3GanttService {
         }
     }
 
-    dateBoundary[0] = moment(months[0], 'MMM YYYY').startOf('month').toDate();
-    dateBoundary[1] = moment(months[months.length - 1], 'MMM YYYY').endOf('month').toDate();
+    dateBoundary.start_date = moment(months[0], 'MMM YYYY').startOf('month').toDate();
+    dateBoundary.end_date = moment(months[months.length - 1], 'MMM YYYY').endOf('month').toDate();
     /* End DateBoundary Setup */
     /* Axis and Dimensions */
     let width = d3.max([CHART_WIDTH, 400]) - this.margin.left - this.margin.right;
