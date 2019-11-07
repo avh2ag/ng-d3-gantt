@@ -450,6 +450,28 @@ export class NgD3GanttService {
     const paddingRight = 5;
     return text.length * fontSizeOffset + paddingRight;
   }
+
+  private getMonthsOftheYear(year) {
+    let months = moment.months();
+    months = months.map( month => {
+        month = month + ' ' + year;
+        return month;
+    });
+    return months;
+  }
+
+  private getActualWidth(node: { start_date: string | Date, end_date: string | Date },
+                         domainFn: (d) => number, transformFn?: (d) => any) {
+    if (!transformFn) {
+        transformFn = (d) => new Date(d);
+      }
+    return this.getDomainDistance(transformFn(node.end_date), transformFn(node.start_date), domainFn);
+  }
+
+  private getDomainDistance(point0: any, point1: any, domainFn: (d) => number ) {
+    return Math.abs( domainFn(point0) - domainFn(point1) );
+  }
+
   /* end helper methods */
 
   public draw(state: string, data: Array<IGanttData>, config: IGanttConfig, elementId: string) {
@@ -474,14 +496,11 @@ export class NgD3GanttService {
           width = Math.abs(x(new Date(dateBoundary[1])) - x(new Date(node.start_date)));
       } else if (startsBefore(node)) {
           width = Math.abs(x(new Date(dateBoundary[0])) - x(new Date(node.end_date)));
+          // width = this.getDomainDistance()
       } else {
-          width = getActualWidth(node);
+          width = this.getActualWidth(node, x);
       }
       return width;
-    };
-
-    const getActualWidth = (node) => {
-      return Math.abs(x(new Date(node.end_date)) - x(new Date(node.start_date)));
     };
 
     const startsBefore = (node) => {
@@ -543,15 +562,6 @@ export class NgD3GanttService {
       };
     };
 
-    const getMonthsOftheYear = (year) => {
-        let months = moment.months();
-        months = months.map( month => {
-            month = month + ' ' + year;
-            return month;
-        });
-        return months;
-    };
-
     dateBoundary = [];
     let subheaderRanges: Array<IGanttCycle> = [];
     let months = [];
@@ -566,7 +576,7 @@ export class NgD3GanttService {
         const years = config.metrics.years;
         const yearsRange = [];
         years.map( year => {
-            months = months.concat(getMonthsOftheYear(year));
+            months = months.concat(this.getMonthsOftheYear(year));
             yearsRange.push(getYearBoundary(year));
         });
         headerRanges = [{
@@ -589,11 +599,11 @@ export class NgD3GanttService {
             }];
 
         } else if (config.metrics.type === 'yearly') {
-            months = getMonthsOftheYear(config.metrics.year);
+            months = this.getMonthsOftheYear(config.metrics.year);
             subheaderRanges = getMonthsRange(months);
             headerRanges = [getYearBoundary(config.metrics.year)];
         } else if (config.metrics.type === 'sprint') {
-            months = getMonthsOftheYear(config.metrics.year);
+            months = this.getMonthsOftheYear(config.metrics.year);
             subheaderRanges = config.metrics.cycles;
             headerRanges = [getYearBoundary(config.metrics.year)];
 
@@ -631,7 +641,7 @@ export class NgD3GanttService {
     }
 
     this.drawCurrentDayLine(canvasArea,
-      getActualWidth(this.currentDay),
+      this.getActualWidth(this.currentDay, x),
       height,
       x(new Date(this.currentDay.start_date)),
       x(new Date(this.currentDay.start_date)));
@@ -666,7 +676,7 @@ export class NgD3GanttService {
             return y(i + 1);
         })
         .attr('width', d => {
-            return (getActualWidth(d) + 10);
+            return (this.getActualWidth(d, x) + 10);
         });
 
     const blockContent = Blocks
@@ -689,14 +699,15 @@ export class NgD3GanttService {
           .text( (d) => {
               return d.title;
           });
+
+    /* footer content, initially hidden */
     const footerContainer = this.drawFooterContainer(blockContent, config.box_padding, y);
-
-    const durationOffset = 100; // @To Do: calc this based on longness of data
     this.drawFooterContent(footerContainer, getWidth, getDuration);
-
     if (config.isShowProgressBar) {
       this.drawProgressBar(footerContainer, getWidth, getDuration); // to add extra config
     }
+    /* end of footer content */
+
     // register reactivity
     Blocks
         .on('click', d => {
@@ -727,12 +738,13 @@ export class NgD3GanttService {
                     if (d.id === b.id) {
                       if (startsBefore(d) || endsAfter(d)) {
                           if (getWidth(b) < 500) {
-                            return (getActualWidth(b) + (500 - getWidth(b)) + 10);
+                            // replace this 10 with config.box padding
+                            return (this.getActualWidth(b, x) + (500 - getWidth(b)) + 10);
                           }
                       }
-                      return ((d3.max([getActualWidth(b), 500])) + 10);
+                      return ((d3.max([this.getActualWidth(b, x), 500])) + 10);
                     } else {
-                      return getActualWidth(b);
+                      return this.getActualWidth(b, x);
                     }
                 });
 
@@ -782,11 +794,13 @@ export class NgD3GanttService {
                 .style('opacity', 1);
             canvasArea.selectAll('.start-lines, .end-lines')
                 .style('stroke-width', 2)
+                .style('stroke', '#d9d9d9')
                 .style('opacity', 1);
 
             Blocks.selectAll('.gantt-entry-rect')
                 .attr('width', b => {
-                    return (getActualWidth(b) + 10);
+                  // replace 10 with config.box padding
+                  return (this.getActualWidth(b, x) + 10);
                 })
                 .style('stroke', '#ccc')
                 .style('stroke-width', 1);
@@ -805,7 +819,7 @@ export class NgD3GanttService {
 
             Blocks.selectAll('.TermType')
                 .attr('opacity', b => {
-                    return Number(getWidth(b) > 80);
+                  return Number(getWidth(b) > 80);
                 });
             timeSeriesContainer.selectAll('.Date')
                 .style('fill', '');
