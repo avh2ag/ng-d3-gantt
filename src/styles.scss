@@ -1,3 +1,4 @@
+$date-stroke: #eee;
 body {
   font-family: 'Open Sans', sans-serif;
 }
@@ -34,12 +35,12 @@ body {
 }
 
 .date-line {
-  stroke: #f5f5f5;
+  stroke: $date-stroke;
   stroke-width: 1;
 }
 .date-block, .date-block-outline {
   fill: #fff;
-  stroke: #ccc;
+  stroke: $date-stroke;
 }
 .start-lines, .end-lines {
   stroke-width: 2;

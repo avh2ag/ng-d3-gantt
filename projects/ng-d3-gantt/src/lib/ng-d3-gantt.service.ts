@@ -202,7 +202,7 @@ export class NgD3GanttService {
         // return d.color;
         return '#d9d9d9';
       })
-      .attr('stroke-width', 2)
+      .style('stroke-width', 2)
       .attr('x1', (d: IGanttData) => {
           return x(new Date(d.start_date)) + 10;
       })
@@ -312,7 +312,7 @@ export class NgD3GanttService {
           return d.name;
         })
         .attr('class', d => {
-            return 'date-title date date-' + moment(d).format('MMYYYY');
+            return 'date date-title date date-' + moment(d).format('MMYYYY');
         });
   }
 
@@ -487,15 +487,16 @@ export class NgD3GanttService {
     return rootEl
         .append('rect')
         .attr('class', className)
-        .attr('rx', 5)
-        .attr('ry', 5)
+        .attr('rx', 2)
+        .attr('ry', 2)
         .attr('height', 60)
-        .attr('x', 0)
+        .style('stroke-width', 2)
+        .attr('x', 5)
         .attr('y', (d, i) => {
-            return yFn(i + 1);
+          return yFn(i + 1);
         })
         .attr('width', d => {
-            return (this.getActualWidth(d, xFn) + 10);
+          return this.getActualWidth(d, xFn) + 5;
         });
   }
 
@@ -810,7 +811,7 @@ export class NgD3GanttService {
                   return Number(d.id === b.id || this.getWidth(b, dateBoundary, x) > 80);
               });
 
-            timeSeriesContainer.selectAll('.Date')
+            timeSeriesContainer.selectAll('.date')
               .style('fill', (b, i) => {
                   if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
                   || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
@@ -842,7 +843,7 @@ export class NgD3GanttService {
             Blocks.selectAll(`.${blockRectClass}`)
                 .attr('width', b => {
                   // replace 10 with config.box padding
-                  return (this.getActualWidth(b, x) + 10);
+                  return this.getActualWidth(b, x) + 5;
                 })
                 .style('stroke', '#ccc')
                 .style('stroke-width', 1);
@@ -863,7 +864,7 @@ export class NgD3GanttService {
                 .attr('opacity', b => {
                   return Number(this.getWidth(b, dateBoundary, x) > 80);
                 });
-            timeSeriesContainer.selectAll('.Date')
+            timeSeriesContainer.selectAll('.date')
                 .style('fill', '');
             timeSeriesContainer.selectAll('.date-block')
                 .style('fill', '');
