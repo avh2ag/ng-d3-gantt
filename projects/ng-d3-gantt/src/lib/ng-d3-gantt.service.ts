@@ -364,25 +364,17 @@ export class NgD3GanttService {
   private drawblockInfoContent(rootEl, dateBoundary, blockInfoTextClass: string,
                                domainFn: (d: IGanttData) => number, durationFn: (d: IGanttData) => string) {
     // Subtitle
-    rootEl.append('text')
-          .attr('class', blockInfoTextClass)
-          .attr('class', 'subtitle')
+    const subtitle = rootEl.append('text')
+          .attr('class', `${blockInfoTextClass} subtitle`)
           .text( (d) => {
             return d.subtitle;
-          }) // tis is the problem
-          .attr('opacity', (d: IGanttData) => {
-            const durationOffset = this.calculateStringLengthOffset(d.subtitle);
-            const width = this.getWidth(d, dateBoundary, domainFn);
-            return Number(width > durationOffset);
-          });
+          }).attr('height', 20);
     // Duration
     rootEl.append('text')
-            .attr('class', blockInfoTextClass)
-            // .attr('x', (d) => {
-            //   return this.calculateStringLengthOffset(d.subtitle);
-            // })
+            .attr('class', `${blockInfoTextClass} duration`)
             .attr('y', (d: IGanttData) => {
-              return this.getDurationOpacity(d, dateBoundary, domainFn) > 0 ? 20 : 0;
+              return subtitle.attr('height');
+              // return this.getDurationOpacity(d, dateBoundary, domainFn) > 0 ? 20 : 0;
             })
             .text( (d) => {
               return `${durationFn(d)}`;
@@ -643,16 +635,14 @@ export class NgD3GanttService {
     return startDate + ' - ' + endDate;
   }
 
-  private trimTitle(entry: IGanttData, blockContent, blockTitleClass: string, width, padding) {
-    // node should always  be blockContent
-    const textBlock = (blockContent).selectAll(`.${blockTitleClass}`).filter((d: IGanttData) => {
+  private trimTitle(entry: IGanttData, rootEl, className: string, width, padding) {
+    const textBlock = (rootEl).selectAll(`.${className}`).filter((d: IGanttData) => {
       return d.id === entry.id;
     });
-
     textBlock.each((d: IGanttData, i) => {
       let textLength = textBlock.node().getComputedTextLength();
       let text = textBlock.text();
-      console.log(textLength, text);
+      // console.log(textLength, text, width)
       while (textLength > (width - padding - 10) && text.length > 0) {
         text = text.slice(0, -1);
         textBlock.text(text + '...');
@@ -660,6 +650,7 @@ export class NgD3GanttService {
       }
     });
   }
+
 
   /* end helper methods */
 
@@ -738,12 +729,6 @@ export class NgD3GanttService {
     const blockContent = this.drawBlockContent(Blocks, blockContentClass, config.box_padding, dateBoundary, x);
     const blockTitleClass = 'block-title';
     const blockTitle = this.drawBlockTitle(blockContent, blockTitleClass, y, config.box_padding);
-    blockContent.each( (entry: IGanttData, i) => {
-      const width = this.getWidth(entry, dateBoundary, x) + config.box_padding;
-      this.trimTitle(entry, blockContent, blockTitleClass, width, config.box_padding);
-    });
-    /* End Block Content */
-    /* blockInfo content, initially hidden */
     const blockInfoClass = 'block-info';
     const blockInfoContainer = this.drawblockInfoContainer(blockContent, config.box_padding, blockInfoClass, 40, y);
     const blockInfoTextClass = 'block-info-text';
@@ -751,7 +736,16 @@ export class NgD3GanttService {
     if (config.isShowProgressBar) {
       this.drawProgressBar(blockInfoContainer, dateBoundary, x, this.getDuration); // to add extra config
     }
-    /* end of blockInfo content */
+    blockContent.each( (entry: IGanttData, i) => {
+      const width = this.getWidth(entry, dateBoundary, x) + config.box_padding;
+      this.trimTitle(entry, blockContent, blockTitleClass, width, config.box_padding);
+    });
+    blockInfoContainer.each( (entry: IGanttData, i) => {
+      const width = this.getWidth(entry, dateBoundary, x) + config.box_padding;
+      this.trimTitle(entry, blockInfoContainer, 'subtitle', width, config.box_padding);
+      this.trimTitle(entry, blockInfoContainer, 'duration', width, config.box_padding);
+    });
+    /* End Block Content  */
 
     // register reactivity
     Blocks
@@ -794,11 +788,6 @@ export class NgD3GanttService {
                   }
               });
 
-            // Blocks.selectAll('.ProgressBar')
-            //   .attr('opacity', b => {
-            //     return Number(d.id === b.id || this.getWidth(b, dateBoundary, x) > 480);
-            //   });
-
             Blocks.selectAll('.Duration')
               .attr('opacity', b => {
                 if (b.id === d.id) {
@@ -828,11 +817,21 @@ export class NgD3GanttService {
                   }
               });
 
-            blockContent.filter((entry: IGanttData, i) => {
-              return entry.id === d.id;
-            })
-            .selectAll(`.${blockTitleClass}`)
-            .text( d => d.title );
+            const filteredEntry = blockContent.filter((entry: IGanttData, i) => {
+                return entry.id === d.id;
+              });
+            filteredEntry.selectAll(`.${blockTitleClass}`)
+              .text( d => d.title );
+            filteredEntry.selectAll(`.duration`)
+              .text(d => {
+                return this.getDuration(d);
+              });
+            filteredEntry.selectAll('.subtitle')
+              .text(d => {
+                console.log(d);
+                return d.subtitle;
+              });
+
         })
         .on('mouseout', (d, i) => {
             Blocks.selectAll(`.${blockContentClass}`)
@@ -866,11 +865,24 @@ export class NgD3GanttService {
             timeSeriesContainer.selectAll('.date-block')
                 .style('fill', '');
 
-            blockContent.filter((entry: IGanttData, i) => {
-              return entry.id === d.id;
-            }).each((entry: IGanttData, i) => {
-              const width = this.getWidth(entry, dateBoundary, x) + config.box_padding;
-              this.trimTitle(entry, blockContent, blockTitleClass, width, config.box_padding);
+            // blockContent.filter((entry: IGanttData, i) => {
+            //   return entry.id === d.id;
+            // }).each((entry: IGanttData, i) => {
+            //   const width = this.getWidth(entry, dateBoundary, x) + config.box_padding;
+            //   this.trimTitle(entry, blockContent, blockTitleClass, width, config.box_padding);
+            // });
+            blockContent.each( (entry: IGanttData, i) => {
+              if (d.id === entry.id) {
+                const width = this.getWidth(entry, dateBoundary, x) + config.box_padding;
+                this.trimTitle(entry, blockContent, blockTitleClass, width, config.box_padding);
+              }
+            });
+            blockInfoContainer.each( (entry: IGanttData, i) => {
+              if (d.id === entry.id) {
+                const width = this.getWidth(entry, dateBoundary, x) + config.box_padding;
+                this.trimTitle(entry, blockInfoContainer, 'subtitle', width, config.box_padding);
+                this.trimTitle(entry, blockInfoContainer, 'duration', width, config.box_padding);
+              }
             });
         });
 
