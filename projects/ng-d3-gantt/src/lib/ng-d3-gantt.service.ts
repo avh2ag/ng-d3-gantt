@@ -113,12 +113,12 @@ export class NgD3GanttService {
     const chartTitle = rootEl
       .append('div')
       .attr('class', 'graph chart-title')
-      .style('height', 40)
+      .style('height', 35)
       .append('svg')
       .attr('width', width + this.margin.left + this.margin.right)
-      .attr('height', 40)
+      .attr('height', 35)
       .append('g');
-    chartTitle.selectAll('.bar')
+    const titleText = chartTitle.selectAll('.bar')
       .data(headerRanges)
       .enter().append('text')
       .attr('class', 'first-title')
@@ -133,6 +133,10 @@ export class NgD3GanttService {
       .text( d => {
         return d.name;
       });
+    const titleTextWidth = titleText.node().getComputedTextLength() * 1.5;
+    const titleMessageX = Math.abs((titleTextWidth / 2));
+    titleText
+        .attr('transform', `translate(${-1 * titleMessageX}, 0)`);
     return chartTitle;
   }
 
@@ -343,7 +347,6 @@ export class NgD3GanttService {
     const EmptyMessageX = Math.abs((emptyBlockWidth / 2) - (EmptyMessageWidth / 2));
     textBlock
       .attr('transform', `translate(${EmptyMessageX}, ${emptyBlockPos})`);
-      // .attr('transform', 'translate(' + EmptyMessageX + ',20)');
   }
 
   private drawblockInfoContainer(rootEl, posX, blockInfoHeight: number, yFn: (idx) => number) {

@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { NgD3GanttModule } from 'ng-d3-gantt';
 
 import { AppComponent } from './app.component';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 @NgModule({
   declarations: [
@@ -10,7 +11,8 @@ import { AppComponent } from './app.component';
   ],
   imports: [
     BrowserModule,
-    NgD3GanttModule
+    NgD3GanttModule,
+    NoopAnimationsModule
   ],
   providers: [],
   bootstrap: [AppComponent]
