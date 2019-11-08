@@ -8,6 +8,7 @@ import { IGanttData } from 'ng-d3-gantt';
 })
 export class AppComponent {
   title = 'd3-gantt';
+  public buttonClasses = 'mat-raised-button mat-button-base mat-primary';
   public data: Array<IGanttData> = [
     {
       id: 1,
