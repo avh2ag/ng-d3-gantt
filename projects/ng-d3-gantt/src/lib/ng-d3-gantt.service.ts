@@ -318,10 +318,12 @@ export class NgD3GanttService {
 
   private renderWithNoData(rootEl, emptyBlockWidth: number, emptyBlockHeight: number, chartWidth: number) {
     const EmptyBlockX = ((chartWidth / 2) - (emptyBlockWidth / 2));
+    const emptyBlockPos = emptyBlockHeight - emptyBlockHeight / 5;
     const EMPTYBLOCK = rootEl
       .append('g')
       .attr('class', 'EmptyMessageBlock')
-      .attr('transform', `translate(${EmptyBlockX}, 20)`);
+      // .attr('transform', `translate(${EmptyBlockX}, 20)`);
+      .attr('transform', `translate(${EmptyBlockX}, ${emptyBlockPos})`);
     EMPTYBLOCK
         .append('rect')
         .attr('fill', 'transparent')
@@ -329,20 +331,19 @@ export class NgD3GanttService {
         .attr('width', emptyBlockWidth)
         .attr('height', emptyBlockHeight);
 
-    EMPTYBLOCK
+    const textBlock = EMPTYBLOCK
         .append('text')
         .attr('class', 'EmptyMessage')
         .attr('font-size', 16)
         .attr('font-weight', 'bold')
-        // .attr('y', 25)
-        .attr('y', emptyBlockHeight)
+        // .attr('y', emptyBlockHeight)
         .text('No data in chart.'); // make this a config
 
-    const textBlock = EMPTYBLOCK.select('.EmptyMessage');
     const EmptyMessageWidth = textBlock.node().getComputedTextLength();
     const EmptyMessageX = Math.abs((emptyBlockWidth / 2) - (EmptyMessageWidth / 2));
     textBlock
-      .attr('transform', 'translate(' + EmptyMessageX + ',20)');
+      .attr('transform', `translate(${EmptyMessageX}, ${emptyBlockPos})`);
+      // .attr('transform', 'translate(' + EmptyMessageX + ',20)');
   }
 
   private drawblockInfoContainer(rootEl, posX, blockInfoHeight: number, yFn: (idx) => number) {
