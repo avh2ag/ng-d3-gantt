@@ -112,7 +112,7 @@ export class NgD3GanttService {
   private drawChartTitle(rootEl, headerRanges, x, y, width: number, dateBoundary) {
     const chartTitle = rootEl
       .append('div')
-      .attr('class', 'graph first_section')
+      .attr('class', 'graph chart-title')
       .style('height', 40)
       .append('svg')
       .attr('width', width + this.margin.left + this.margin.right)
@@ -139,7 +139,7 @@ export class NgD3GanttService {
   private drawTimeSeriesContainer(rootEl, width: number) {
     return rootEl
       .append('div')
-      .attr('class', 'graph second_section')
+      .attr('class', 'graph time-series')
       .style('height', 40)
       .append('svg')
       .attr('width', width + this.margin.left + this.margin.right)
@@ -343,14 +343,14 @@ export class NgD3GanttService {
       .attr('transform', 'translate(' + EmptyMessageX + ',20)');
   }
 
-  private drawblockInfoContainer(rootEl, posX, yFn: (idx) => number) {
+  private drawblockInfoContainer(rootEl, posX, blockInfoHeight: number, yFn: (idx) => number) {
     return rootEl.append('g')
       .attr('transform', (d, i) => {
         let position = posX;
         if (posX < 10) {
             position = 0;
         }
-        return `translate( ${position}, ${(yFn(i + 1) + 45)})`;
+        return `translate( ${position}, ${(yFn(i + 1) + blockInfoHeight)})`;
       });
   }
 
@@ -387,7 +387,8 @@ export class NgD3GanttService {
         .attr('class', 'ProgressBar')
         .attr('fill', '#ddd')
         .attr('width', d => {
-          return d.completion_percentage === undefined ? 0 : this.PROGRESSBAR_WIDTH;
+          const maxProgressBarWidth = 100;
+          return d.completion_percentage === undefined ? 0 : maxProgressBarWidth;
         });
     // progressbar fill
     blockInfo.append('rect')
@@ -397,18 +398,20 @@ export class NgD3GanttService {
           if (d.completion_percentage === undefined) {
             return 0;
           } else {
-            return ((d.completion_percentage * this.PROGRESSBAR_WIDTH) / 100);
+            const maxProgressBarWidth = 100;
+            return ((d.completion_percentage * maxProgressBarWidth) / 100);
           }
       });
     blockInfo.selectAll('.ProgressBar')
       .attr('rx', 5)
       .attr('ry', 5)
-      .attr('y', -7)
+      .attr('y', 20)
       .attr('height', 7)
-      .attr('x', d => {
-        return this.calculateStringLengthOffset(d.subtitle)
-          + this.calculateStringLengthOffset(durationFn(d));
-      })
+      // .attr('x', d => {
+      //   return this.calculateStringLengthOffset(d.subtitle)
+      //     + this.calculateStringLengthOffset(durationFn(d));
+      // })
+      .attr('x', 0)
       .attr('opacity', d => {
           // const previousTextWidth = this.calculateStringLengthOffset(d.subtitle)
           // + this.calculateStringLengthOffset(durationFn(d))
@@ -483,13 +486,13 @@ export class NgD3GanttService {
         });
   }
 
-  private drawBlockRectangles(rootEl, className: string, xFn: (d) => number, yFn: (d) => number) {
+  private drawBlockRectangles(rootEl, className: string, blockHeight: number, xFn: (d) => number, yFn: (d) => number) {
     return rootEl
         .append('rect')
         .attr('class', className)
         .attr('rx', 2)
         .attr('ry', 2)
-        .attr('height', 60)
+        .attr('height', blockHeight)
         .style('stroke-width', 2)
         .attr('x', 5)
         .attr('y', (d, i) => {
@@ -674,7 +677,9 @@ export class NgD3GanttService {
     const ROOT_ELEMENT = d3.select(`#${elementId}`);
     const CHART_WIDTH = ROOT_ELEMENT._groups[0][0].offsetWidth;
     const EMPTYBLOCK_WIDTH = ((80 * CHART_WIDTH) / 100);
-    const CHART_HEIGHT = d3.max([((data.length * 80) + 100), 300]);
+    const MAX_RECT_HEIGHT = 110;
+    const CHART_HEIGHT = d3.max([((data.length * MAX_RECT_HEIGHT) + MAX_RECT_HEIGHT), 300]);
+
 
     /* Date Info/Boundary setup */
     const dateInfo: { subheaderRanges: Array<any>, months: Array<string>, headerRanges: Array<any> } = this.getDateInfo(config);
@@ -727,12 +732,13 @@ export class NgD3GanttService {
     }
     /* End Chart Background */
     /* Block Content */
+    const blockHeight = 85;
     const blockContainerClass = 'blocks';
     const blockContainer = this.drawBlockContainer(canvasArea, blockContainerClass);
     const blocksClass = 'gantt-entry-box'; // abstract up
     const Blocks = this.drawBlocks(blockContainer, data, x, blocksClass);
     const blockRectClass = 'gantt-entry-rect';
-    const blockArea = this.drawBlockRectangles(Blocks, blockRectClass, x, y);
+    const blockArea = this.drawBlockRectangles(Blocks, blockRectClass, blockHeight, x, y);
     const blockContentClass = 'gantt-entry';
     const blockContent = this.drawBlockContent(Blocks, blockContentClass, dateBoundary, x);
     const blockTitleClass = 'block-title';
@@ -743,7 +749,7 @@ export class NgD3GanttService {
     });
     /* End Block Content */
     /* blockInfo content, initially hidden */
-    const blockInfoContainer = this.drawblockInfoContainer(blockContent, config.box_padding, y);
+    const blockInfoContainer = this.drawblockInfoContainer(blockContent, config.box_padding, 45, y);
     const blockInfoTextClass = 'block-info-text';
     this.drawblockInfoContent(blockInfoContainer, dateBoundary, blockInfoTextClass, x, this.getDuration);
     if (config.isShowProgressBar) {

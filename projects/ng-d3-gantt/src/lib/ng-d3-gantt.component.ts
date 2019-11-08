@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, AfterViewInit, HostListener } from '@angular/core';
+import { Component, OnInit, Input, AfterViewInit, HostListener, ViewEncapsulation } from '@angular/core';
 import { NgD3GanttService } from './ng-d3-gantt.service';
 import { IGanttConfig, IGanttData } from './ng-d3-gantt.interface';
 
@@ -6,18 +6,20 @@ import { IGanttConfig, IGanttData } from './ng-d3-gantt.interface';
   // tslint:disable-next-line: component-selector
   selector: 'ng-d3-gantt',
   template: `
-    <button (click)="goToPrevious()">Previous</button>
-    <button (click)="goToNext()">Next</button>
+    <button [class]="buttonClasses" (click)="goToPrevious()">Previous</button>
+    <button [class]="buttonClasses" (click)="goToNext()">Next</button>
     <div [id]="chartElementId" class="gantt-chart">
     </div>
   `,
-  styles: [],
-  providers: [NgD3GanttService]
+  styleUrls: ['./ng-d3-gantt.scss'],
+  providers: [NgD3GanttService],
+  encapsulation: ViewEncapsulation.None
 })
 export class NgD3GanttComponent implements OnInit, AfterViewInit {
   @Input() chartElementId = 'ng-d3-gantt-chart';
   @Input() data: Array<IGanttData> = [];
   @Input() config: IGanttConfig;
+  @Input() buttonClasses = '';
   constructor(private ganttService: NgD3GanttService) { }
 
   ngOnInit() {}

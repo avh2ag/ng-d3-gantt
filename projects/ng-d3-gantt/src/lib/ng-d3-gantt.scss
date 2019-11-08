@@ -1,0 +1,60 @@
+$date-stroke: #eee;
+// @TO Do Style cleanup for variables
+.gantt-chart {
+  min-width: 500px;
+  overflow: auto;
+  .gantt-entry-box {
+    cursor: pointer;
+  }
+
+  .gantt-entry-rect {
+    fill: #fff;
+    stroke: #ccc;
+    stroke-width: 1;
+    border-radius: 10px;
+  }
+
+  .block-title {
+    font-weight: 800;
+    font-size: 14px;
+  }
+
+  .block-info-text {
+    fill: black;
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+  .date-title {
+    font-size: 13px;
+    text-align: center;
+    width: 50%;
+    margin: 0 auto;
+  }
+
+  .date-line {
+    stroke: $date-stroke;
+    stroke-width: 1;
+  }
+  .date-block, .date-block-outline {
+    fill: #fff;
+    stroke: $date-stroke;
+  }
+  .start-lines, .end-lines {
+    stroke-width: 2;
+  }
+
+  .empty_message_block {
+    border: #ccc;
+    border-radius: 4px;
+  }
+
+  .current-day-line {
+    stroke: #60bdf1;
+    stroke-width: 3;
+  }
+}
+// body {
+//   font-family: 'Open Sans', sans-serif;
+// }
+
+

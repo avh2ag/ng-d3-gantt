@@ -1,5 +1,8 @@
 <ng-d3-gantt [chartElementId]="chartContainerName" [config]="config" [data]="[]" >
 </ng-d3-gantt>
 
-<ng-d3-gantt chartElementId="second-chart" [config]="config" [data]="data" >
-</ng-d3-gantt>
+<div class="override" style="width:500px; height:500px; overflow:scroll;">
+  <ng-d3-gantt chartElementId="second-chart" [config]="config" [data]="data" >
+  </ng-d3-gantt>
+</div>
+
