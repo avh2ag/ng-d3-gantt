@@ -87,7 +87,7 @@ export class AppComponent {
   public config = {
     // data: this.data, // Your actuall data
     element: `#${this.chartContainerName}`, // remove, make separate input
-    box_padding: 10, // Padding for the blocks
+    box_padding: 8, // Padding for the blocks in d3 units not pixels
     // metrics: {type: 'overall', years: [2016, 2017, 2018]}, // Type of gantt
     // metrics: {type: 'sprint', year: 2017, cycles: this.cycles}, // Type of gantt
     metrics: {type: 'yearly', year: 2017}, // Type of gantt

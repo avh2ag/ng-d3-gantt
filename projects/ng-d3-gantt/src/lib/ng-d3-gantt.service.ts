@@ -195,6 +195,7 @@ export class NgD3GanttService {
   }
 
   private drawStartLines(rootEl, className: string, data: Array<IGanttData>, x: any, y: any) {
+    const strokeWidth = 2;
     return rootEl.append('g')
     .attr('transform', 'translate(' + this.margin.left + ',' + 0 + ')')
     .selectAll(`.${className}`)
@@ -206,7 +207,7 @@ export class NgD3GanttService {
         // return d.color;
         return '#d9d9d9';
       })
-      .style('stroke-width', 2)
+      .style('stroke-width', strokeWidth)
       .attr('x1', (d: IGanttData) => {
           return x(new Date(d.start_date)) + 10;
       })
@@ -216,7 +217,8 @@ export class NgD3GanttService {
       .attr('y1', 0)
       .attr('y2', (d, i) => {
           return (y(i + 1) + 20);
-      });
+      })
+      .attr('transform', `translate(${-1 * strokeWidth}, 0)`);
   }
 
   private drawEndLines(rootEl, data: Array<IGanttData>, className: string, x: any, y: any) {
@@ -349,14 +351,13 @@ export class NgD3GanttService {
       .attr('transform', `translate(${EmptyMessageX}, ${emptyBlockPos})`);
   }
 
-  private drawblockInfoContainer(rootEl, posX, blockInfoHeight: number, yFn: (idx) => number) {
-    return rootEl.append('g')
+  private drawblockInfoContainer(rootEl, boxPadding, className: string, blockInfoHeight: number, yFn: (idx) => number) {
+    return rootEl
+      .append('g')
+      .attr('class', className)
       .attr('transform', (d, i) => {
-        let position = posX;
-        if (posX < 10) {
-            position = 0;
-        }
-        return `translate( ${position}, ${(yFn(i + 1) + blockInfoHeight)})`;
+        // const position = Math.abs(xFn(d) + boxPadding);
+        return `translate( ${boxPadding}, ${(yFn(i + 1) + blockInfoHeight)})`;
       });
   }
 
@@ -365,9 +366,10 @@ export class NgD3GanttService {
     // Subtitle
     rootEl.append('text')
           .attr('class', blockInfoTextClass)
+          .attr('class', 'subtitle')
           .text( (d) => {
             return d.subtitle;
-          })
+          }) // tis is the problem
           .attr('opacity', (d: IGanttData) => {
             const durationOffset = this.calculateStringLengthOffset(d.subtitle);
             const width = this.getWidth(d, dateBoundary, domainFn);
@@ -376,14 +378,14 @@ export class NgD3GanttService {
     // Duration
     rootEl.append('text')
             .attr('class', blockInfoTextClass)
-            .attr('x', (d) => {
-              return this.calculateStringLengthOffset(d.subtitle);
+            // .attr('x', (d) => {
+            //   return this.calculateStringLengthOffset(d.subtitle);
+            // })
+            .attr('y', (d: IGanttData) => {
+              return this.getDurationOpacity(d, dateBoundary, domainFn) > 0 ? 20 : 0;
             })
             .text( (d) => {
               return `${durationFn(d)}`;
-            })
-            .attr('opacity', d => {
-              return this.getDurationOpacity(d, dateBoundary, domainFn);
             });
   }
 
@@ -393,7 +395,7 @@ export class NgD3GanttService {
         .attr('class', 'ProgressBar')
         .attr('fill', '#ddd')
         .attr('width', d => {
-          const maxProgressBarWidth = 100;
+          const maxProgressBarWidth = this.getWidth(d, dateBoundary, domainFn) * .95;
           return d.completion_percentage === undefined ? 0 : maxProgressBarWidth;
         });
     // progressbar fill
@@ -404,27 +406,20 @@ export class NgD3GanttService {
           if (d.completion_percentage === undefined) {
             return 0;
           } else {
-            const maxProgressBarWidth = 100;
+            const maxProgressBarWidth = this.getWidth(d, dateBoundary, domainFn) * .95;
             return ((d.completion_percentage * maxProgressBarWidth) / 100);
           }
       });
     blockInfo.selectAll('.ProgressBar')
       .attr('rx', 5)
       .attr('ry', 5)
-      .attr('y', 20)
+      .attr('y', 30)
       .attr('height', 7)
       // .attr('x', d => {
       //   return this.calculateStringLengthOffset(d.subtitle)
       //     + this.calculateStringLengthOffset(durationFn(d));
       // })
-      .attr('x', 0)
-      .attr('opacity', d => {
-          // const previousTextWidth = this.calculateStringLengthOffset(d.subtitle)
-          // + this.calculateStringLengthOffset(durationFn(d))
-          // + this.PROGRESSBAR_WIDTH;
-          // return Number(widthFn(d) > previousTextWidth);
-        return this.getProgressBarOpacity(d, dateBoundary, domainFn, durationFn);
-      });
+      .attr('x', 0);
   }
 
   private getDateInfo(config: IGanttConfig) {
@@ -509,16 +504,16 @@ export class NgD3GanttService {
         });
   }
 
-  private drawBlockContent(rootEl, className: string, dateBoundary, xFn: (d) => number) {
+  private drawBlockContent(rootEl, className: string, boxPadding: number, dateBoundary, xFn: (d) => number) {
     return rootEl
       .append('g')
       .attr('class', className)
       .attr('transform', (d, i) => {
         if (this.startsBefore(d, dateBoundary.start_date) && this.getIsVisible(d, dateBoundary)) {
-            const positionX = Math.abs(xFn(new Date(d.start_date)));
-            return `translate(${positionX}, 0)`;
+          const positionX = Math.abs(xFn(new Date(d.start_date))) + boxPadding;
+          return `translate(${positionX}, ${boxPadding})`;
         } else {
-            return 'translate(0, 0)';
+          return `translate(${boxPadding}, ${boxPadding})`;
         }
       });
   }
@@ -536,15 +531,6 @@ export class NgD3GanttService {
   }
 
   /* helper methods */
-  private getProgressBarOpacity(d: IGanttData, dateBoundary, domainFn: (d: IGanttData) => number,
-                                durationFn: (d: IGanttData) => string): number {
-    const previousTextWidth = this.calculateStringLengthOffset(d.subtitle)
-    + this.calculateStringLengthOffset(durationFn(d))
-    + this.PROGRESSBAR_WIDTH;
-    const width = this.getWidth(d, dateBoundary, domainFn);
-    return Number(width > previousTextWidth);
-  }
-
   private getDurationOpacity(d: IGanttData, dateBoundary, domainFn: (d: IGanttData) => number) {
     const durationOffset = this.calculateStringLengthOffset(d.subtitle);
     const width = this.getWidth(d, dateBoundary, domainFn);
@@ -662,10 +648,12 @@ export class NgD3GanttService {
     const textBlock = (blockContent).selectAll(`.${blockTitleClass}`).filter((d: IGanttData) => {
       return d.id === entry.id;
     });
+
     textBlock.each((d: IGanttData, i) => {
       let textLength = textBlock.node().getComputedTextLength();
       let text = textBlock.text();
-      while (textLength > (width - padding) && text.length > 0) {
+      console.log(textLength, text);
+      while (textLength > (width - padding - 10) && text.length > 0) {
         text = text.slice(0, -1);
         textBlock.text(text + '...');
         textLength = textBlock.node().getComputedTextLength();
@@ -747,7 +735,7 @@ export class NgD3GanttService {
     const blockRectClass = 'gantt-entry-rect';
     const blockArea = this.drawBlockRectangles(Blocks, blockRectClass, blockHeight, x, y);
     const blockContentClass = 'gantt-entry';
-    const blockContent = this.drawBlockContent(Blocks, blockContentClass, dateBoundary, x);
+    const blockContent = this.drawBlockContent(Blocks, blockContentClass, config.box_padding, dateBoundary, x);
     const blockTitleClass = 'block-title';
     const blockTitle = this.drawBlockTitle(blockContent, blockTitleClass, y, config.box_padding);
     blockContent.each( (entry: IGanttData, i) => {
@@ -756,7 +744,8 @@ export class NgD3GanttService {
     });
     /* End Block Content */
     /* blockInfo content, initially hidden */
-    const blockInfoContainer = this.drawblockInfoContainer(blockContent, config.box_padding, 45, y);
+    const blockInfoClass = 'block-info';
+    const blockInfoContainer = this.drawblockInfoContainer(blockContent, config.box_padding, blockInfoClass, 40, y);
     const blockInfoTextClass = 'block-info-text';
     this.drawblockInfoContent(blockInfoContainer, dateBoundary, blockInfoTextClass, x, this.getDuration);
     if (config.isShowProgressBar) {
@@ -805,10 +794,10 @@ export class NgD3GanttService {
                   }
               });
 
-            Blocks.selectAll('.ProgressBar')
-              .attr('opacity', b => {
-                return Number(d.id === b.id || this.getWidth(b, dateBoundary, x) > 480);
-              });
+            // Blocks.selectAll('.ProgressBar')
+            //   .attr('opacity', b => {
+            //     return Number(d.id === b.id || this.getWidth(b, dateBoundary, x) > 480);
+            //   });
 
             Blocks.selectAll('.Duration')
               .attr('opacity', b => {
@@ -860,11 +849,6 @@ export class NgD3GanttService {
                 })
                 .style('stroke', '#ccc')
                 .style('stroke-width', 1);
-
-            Blocks.selectAll('.ProgressBar')
-                .attr('opacity', b => {
-                  return this.getProgressBarOpacity(b, dateBoundary, x, this.getDuration);
-                });
 
             Blocks.selectAll('.Duration')
                 .attr('opacity', b => {
