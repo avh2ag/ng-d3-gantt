@@ -1,8 +1,13 @@
-<ng-d3-gantt [chartElementId]="chartContainerName" [config]="config" [data]="[]" >
+<ng-d3-gantt chartElementId="first-chart" [config]="config" [data]="[]" >
 </ng-d3-gantt>
-
-<div class="override" style="width:500px; height:500px; overflow:scroll;">
-  <ng-d3-gantt chartElementId="second-chart" [config]="config" [data]="data" >
-  </ng-d3-gantt>
+<div style="display:flex;">
+  <div class="override" style="width:30%; height:500px; overflow:scroll;">
+    <ng-d3-gantt chartElementId="second-chart" [config]="config" [data]="data" >
+    </ng-d3-gantt>
+  </div>
+  <div  style="width:70%; display: block; height:500px; overflow:scroll;">
+    <ng-d3-gantt chartElementId="third-chart" [config]="config" [data]="data" >
+    </ng-d3-gantt>
+  </div>
 </div>
 

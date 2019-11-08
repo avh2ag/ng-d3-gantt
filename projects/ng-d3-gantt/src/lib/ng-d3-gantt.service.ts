@@ -215,9 +215,9 @@ export class NgD3GanttService {
       });
   }
 
-  private drawEndLines(rootEl, data: Array<IGanttData>, x: any, y: any) {
+  private drawEndLines(rootEl, data: Array<IGanttData>, className: string, x: any, y: any) {
     return rootEl
-      .selectAll('.end-lines')
+      .selectAll(`.${className}`)
       .data(data)
       .enter()
       .append('line')
@@ -226,7 +226,7 @@ export class NgD3GanttService {
         return '#d9d9d9';
       })
       .attr('stroke-width', 2)
-      .attr('class', 'end-lines')
+      .attr('class', className)
       .attr('x1', (d: IGanttData) => {
           return x(new Date(d.end_date)) + 5;
       })
@@ -321,10 +321,10 @@ export class NgD3GanttService {
     const EMPTYBLOCK = rootEl
       .append('g')
       .attr('class', 'EmptyMessageBlock')
-      .attr('transform', 'translate(' + EmptyBlockX + ', 20)');
+      .attr('transform', `translate(${EmptyBlockX}, 20)`);
     EMPTYBLOCK
         .append('rect')
-        .attr('fill', '#fff')
+        .attr('fill', 'transparent')
         .attr('x', 0)
         .attr('width', emptyBlockWidth)
         .attr('height', emptyBlockHeight);
@@ -332,8 +332,10 @@ export class NgD3GanttService {
     EMPTYBLOCK
         .append('text')
         .attr('class', 'EmptyMessage')
-        .attr('font-size', 14)
-        .attr('y', 25)
+        .attr('font-size', 16)
+        .attr('font-weight', 'bold')
+        // .attr('y', 25)
+        .attr('y', emptyBlockHeight)
         .text('No data in chart.'); // make this a config
 
     const textBlock = EMPTYBLOCK.select('.EmptyMessage');
@@ -714,7 +716,8 @@ export class NgD3GanttService {
     const canvasArea = this.drawCanvasArea(ROOT_ELEMENT, height, drawAreawidth);
     const startLineClassName = 'start-lines';
     const startLines = this.drawStartLines(canvasArea, startLineClassName, data, x, y);
-    const endLines = this.drawEndLines(canvasArea, data, x, y);
+    const endLineClassName = 'end-lines';
+    const endLines = this.drawEndLines(canvasArea, data, endLineClassName, x, y);
     if (config.isShowGridlines) {
       this.drawGridLines(canvasArea, subheaderRanges, x, height);
     }
@@ -732,7 +735,7 @@ export class NgD3GanttService {
     }
     /* End Chart Background */
     /* Block Content */
-    const blockHeight = 85;
+    const blockHeight = MAX_RECT_HEIGHT - config.box_padding;
     const blockContainerClass = 'blocks';
     const blockContainer = this.drawBlockContainer(canvasArea, blockContainerClass);
     const blocksClass = 'gantt-entry-box'; // abstract up
@@ -768,7 +771,7 @@ export class NgD3GanttService {
                     return (d.id === b.id) ? 1 : 0.3;
                 });
 
-            canvasArea.selectAll(`.${startLineClassName}, .end-lines`)
+            canvasArea.selectAll(`.${startLineClassName}, .${endLineClassName}`)
               .style('stroke-width', (b, i) => {
                   return (d.id === b.id) ? 3 : 2;
               })
@@ -841,7 +844,7 @@ export class NgD3GanttService {
         .on('mouseout', (d, i) => {
             Blocks.selectAll(`.${blockContentClass}`)
                 .style('opacity', 1);
-            canvasArea.selectAll(`.${startLineClassName}, .end-lines`)
+            canvasArea.selectAll(`.${startLineClassName}, .${endLineClassName}`)
                 .style('stroke-width', 2)
                 .style('stroke', '#d9d9d9')
                 .style('opacity', 1);
