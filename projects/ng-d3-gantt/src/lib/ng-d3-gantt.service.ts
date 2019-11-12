@@ -641,6 +641,7 @@ export class NgD3GanttService {
       while (textLength > (width - padding - 10) && text.length > 0) {
         text = text.slice(0, -1);
         textBlock.text(text + '...');
+        textBlock.attr('is-clipped', 'clipped');
         textLength = textBlock.node().getComputedTextLength();
       }
     });
@@ -795,11 +796,17 @@ export class NgD3GanttService {
             })
             .attr('width', b => {
               const width = this.getActualWidth(b, x) + config.box_padding;
-              const currFieldText = this.getLongestFieldName(b); // switch this to return the field
-              const fontSizeOffset = this.getFontSize(filteredEntry, `.${currFieldText}`) / 3;
-              const textForWidthCheck = b[currFieldText] ? b[currFieldText] : 'mmm dd - mmm dd';
-              const currFieldWidth = this.calculateStringLengthOffset(textForWidthCheck, fontSizeOffset);
-              return width + currFieldWidth;
+              const longestFieldName = this.getLongestFieldName(b); // switch this to return the field
+              const isClippedText = filteredEntry.select(`.${longestFieldName}`).attr('is-clipped');
+              if (isClippedText) {
+                const fontSizeOffset = this.getFontSize(filteredEntry, `.${longestFieldName}`) / 3;
+                const textForWidthCheck = b[longestFieldName] ? b[longestFieldName] : 'mmm dd - mmm dd';
+                const currFieldWidth = this.calculateStringLengthOffset(textForWidthCheck, fontSizeOffset);
+                return width + currFieldWidth;
+              } else {
+                return width;
+              }
+
             });
 
           Blocks.selectAll(`.${blockContentClass}`)
