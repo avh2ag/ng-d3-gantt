@@ -1,5 +1,6 @@
 $fill-primary:#fff;
 $fill-secondary: #e7e7e7;
+$fill-active: #f0f6f9;
 
 $stroke-primary: #ccc;
 $stroke-secondary: #bbb;
@@ -10,9 +11,10 @@ $date-fill: $fill-secondary;
 $rect-fill: $fill-primary;
 
 $current-day-color: #60bdf1;
+$active-color: #4894ff;
 
 $progress-bar-container-fill: $stroke-primary;
-$progress-bar-progress-fill: $current-day-color;
+$progress-bar-progress-fill: $active-color;
 // @TO Do Style cleanup for variables
 .gantt-chart {
   min-width: 500px;
@@ -28,7 +30,7 @@ $progress-bar-progress-fill: $current-day-color;
   }
   .time-series {
     background: transparent;
-    font-size: 20px;
+    font-size: 14px;
     font-weight: 500;
   }
 
@@ -41,6 +43,10 @@ $progress-bar-progress-fill: $current-day-color;
     stroke: $stroke-primary;
     stroke-width: 1;
   }
+  .gantt-entry-rect.active {
+    stroke-width: 2;
+    stroke: $stroke-secondary;
+  }
 
   .title {
     font-weight: 800;
@@ -52,6 +58,11 @@ $progress-bar-progress-fill: $current-day-color;
     font-size: 14px;
     text-transform: uppercase;
   }
+
+  .date.active {
+    fill: $active-color;
+  }
+
   .date-title {
     font-size: 14px;
     text-align: center;
@@ -67,9 +78,16 @@ $progress-bar-progress-fill: $current-day-color;
     fill: $date-fill;
     stroke: $date-stroke;
   }
+  .date-block.active {
+    fill: $fill-active;
+  }
   .start-lines, .end-lines {
     stroke-width: 2;
     stroke: $stroke-accent;
+  }
+  .start-lines.active, .end-lines.active {
+    stroke-width: 3;
+    stroke: $active-color;
   }
 
   .empty-message-rect {

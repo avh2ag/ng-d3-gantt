@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import * as d3 from 'd3';
 import { IGanttConfig, IGanttData, IGanttCycle } from './ng-d3-gantt.interface';
 import * as moment_ from 'moment';
+import { config } from 'rxjs';
 const moment = moment_;
 
 // tslint:disable: no-shadowed-variable
@@ -367,7 +368,7 @@ export class NgD3GanttService {
     blockInfo.append('rect')
         .attr('class', 'progress-bar')
         .attr('width', d => {
-          const maxProgressBarWidth = this.getWidth(d, dateBoundary, domainFn) * .95;
+          const maxProgressBarWidth = this.getWidth(d, dateBoundary, domainFn) * .9;
           return d.completion_percentage === undefined ? 0 : maxProgressBarWidth;
         });
     // progressbar fill
@@ -377,7 +378,7 @@ export class NgD3GanttService {
           if (d.completion_percentage === undefined) {
             return 0;
           } else {
-            const maxProgressBarWidth = this.getWidth(d, dateBoundary, domainFn) * .95;
+            const maxProgressBarWidth = this.getWidth(d, dateBoundary, domainFn) * .9;
             return ((d.completion_percentage * maxProgressBarWidth) / 100);
           }
       });
@@ -468,7 +469,6 @@ export class NgD3GanttService {
         .attr('rx', 2)
         .attr('ry', 2)
         .attr('height', blockHeight)
-        .style('stroke-width', 2)
         .attr('x', 5)
         .attr('y', (d, i) => {
           return yFn(i + 1);
@@ -603,7 +603,6 @@ export class NgD3GanttService {
     };
   }
 
-  // functions that need to be hoisted to play nicely
   private getDuration(d: IGanttData) {
     const startDate = moment(d.start_date, 'MM/DD/YYYY').format('DD MMM');
     const endDate = moment(d.end_date, 'MM/DD/YYYY').format('DD MMM');
@@ -647,6 +646,10 @@ export class NgD3GanttService {
   }
   private getFontSize(parentEl, selector: string): number {
     return parseFloat(parentEl.select(selector).style('font-size'));
+  }
+  private getIsBetween(date, dateRange) {
+    return (moment(date.start_date, 'MM/DD/YYYY').isBetween(dateRange.start_date, dateRange.end_date, 'days')
+    || moment(date.end_date, 'MM/DD/YYYY').isBetween(dateRange.start_date, dateRange.end_date, 'days'));
   }
   /* end helper methods */
 
@@ -749,7 +752,6 @@ export class NgD3GanttService {
           config.onClick(d);
         })
         .on('mouseover', (d, i) => {
-
           const filteredEntry = blockContent.filter((entry: IGanttData, i) => {
             return entry.id === d.id;
           });
@@ -767,12 +769,7 @@ export class NgD3GanttService {
             return entry.id === d.id;
           })
             .selectAll(`.${blockRectClass}`)
-            .style('stroke-width', b => {
-              return d.id === b.id ? 2 : 1;
-            })
-            .style('stroke', b => {
-              return d.id === b.id ? '#bbb' : '#ccc';
-            })
+            .attr('class', `${blockRectClass} active`)
             .attr('width', b => {
               const width = this.getActualWidth(b, x) + config.box_padding;
               const longestFieldName = this.getLongestFieldName(b); // switch this to return the field
@@ -785,21 +782,18 @@ export class NgD3GanttService {
               } else {
                 return width;
               }
-
             });
-
+          // leave this behavior as canon
           Blocks.selectAll(`.${blockContentClass}`)
               .style('opacity', (b, i) => {
                   return (d.id === b.id) ? 1 : 0.3;
               });
 
           canvasArea.selectAll(`.${startLineClassName}, .${endLineClassName}`)
-            .style('stroke-width', (b, i) => {
-                return (d.id === b.id) ? 3 : 2;
+            .filter((entry: IGanttData) => {
+              return entry.id === d.id;
             })
-            .style('stroke', (b, i) => {
-              return (d.id === b.id) ? '#4894ff' : '#d9d9d9';
-            });
+            .attr('class', `active ${startLineClassName} ${endLineClassName}`);
 
           Blocks.selectAll('.TermType')
             .attr('opacity', (b) => {
@@ -807,45 +801,38 @@ export class NgD3GanttService {
             });
 
           timeSeriesContainer.selectAll('.date')
-            .style('fill', (b, i) => {
-                if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
-                || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
-                  return '#4894ff';
-                }
-            });
-          timeSeriesContainer.selectAll('.date-block')
-            .style('fill', (b, i) => {
-                if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
-                || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
-                  return '#f0f6f9';
-                }
-            });
+            .filter( (b, i) => {
+              return this.getIsBetween(b, d);
+            })
+            .attr('class', 'date active');
+
+          const activeDates = timeSeriesContainer.selectAll('.date-block')
+            .filter( (b, i) => {
+              return this.getIsBetween(b, d);
+            })
+            .attr('class', 'date-block active');
 
         })
         .on('mouseout', (d, i) => {
             Blocks.selectAll(`.${blockContentClass}`)
                 .style('opacity', 1);
-            canvasArea.selectAll(`.${startLineClassName}, .${endLineClassName}`)
-                .style('stroke-width', 2)
-                .style('stroke', '#d9d9d9')
-                .style('opacity', 1);
+            canvasArea.selectAll(`.${startLineClassName}`)
+              .attr('class', startLineClassName);
+            canvasArea.selectAll(`.${endLineClassName}`)
+              .attr('class', endLineClassName);
 
             Blocks.selectAll(`.${blockRectClass}`)
+                .attr('class', `${blockRectClass}`)
                 .attr('width', b => {
-                  // replace 10 with config.box padding
-                  return this.getActualWidth(b, x) + 5;
-                })
-                .style('stroke', '#ccc')
-                .style('stroke-width', 1);
+                  return this.getActualWidth(b, x) + config.box_padding;
+                });
 
             Blocks.selectAll('.TermType')
                 .attr('opacity', b => {
                   return Number(this.getWidth(b, dateBoundary, x) > 80);
                 });
-            timeSeriesContainer.selectAll('.date')
-                .style('fill', '');
-            timeSeriesContainer.selectAll('.date-block')
-                .style('fill', '');
+            timeSeriesContainer.selectAll('.date').attr('class', 'date');
+            timeSeriesContainer.selectAll('.date-block').attr('class', 'date-block');
 
             blockContent.each( (entry: IGanttData, i) => {
               if (d.id === entry.id) {

@@ -88,9 +88,9 @@ export class AppComponent {
     // data: this.data, // Your actuall data
     element: `#${this.chartContainerName}`, // remove, make separate input
     box_padding: 8, // Padding for the blocks in d3 units not pixels
-    metrics: {type: 'overall', years: [2016, 2017, 2018]}, // Type of gantt
+    // metrics: {type: 'overall', years: [2016, 2017, 2018]}, // Type of gantt
     // metrics: {type: 'sprint', year: 2017, cycles: this.cycles}, // Type of gantt
-    // metrics: {type: 'yearly', year: 2017}, // Type of gantt
+    metrics: {type: 'yearly', year: 2017}, // Type of gantt
     // metrics: {type: 'monthly', month: 'March 2017'}, // For Monthly Data
     // metrics: {type: 'quarterly', months: ['January 2017', 'February 2017', 'March 2017']}, // For quarterly or half yearly data
     isShowProgressBar: true,
