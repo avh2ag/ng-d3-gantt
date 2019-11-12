@@ -2,8 +2,6 @@ import { Injectable } from '@angular/core';
 import * as d3 from 'd3';
 import { IGanttConfig, IGanttData, IGanttCycle } from './ng-d3-gantt.interface';
 import * as moment_ from 'moment';
-import { stringify } from '@angular/compiler/src/util';
-import { config } from 'rxjs';
 const moment = moment_;
 
 // tslint:disable: no-shadowed-variable
@@ -195,7 +193,6 @@ export class NgD3GanttService {
   }
 
   private drawStartLines(rootEl, className: string, data: Array<IGanttData>, x: any, y: any) {
-    const strokeWidth = 2;
     return rootEl.append('g')
     .attr('transform', 'translate(' + this.margin.left + ',' + 0 + ')')
     .selectAll(`.${className}`)
@@ -203,11 +200,6 @@ export class NgD3GanttService {
       .enter()
       .append('line')
       .attr('class', className)
-      .attr('stroke', (d: IGanttData) => {
-        // return d.color;
-        return '#d9d9d9';
-      })
-      .style('stroke-width', strokeWidth)
       .attr('x1', (d: IGanttData) => {
           return x(new Date(d.start_date)) + 10;
       })
@@ -218,7 +210,7 @@ export class NgD3GanttService {
       .attr('y2', (d, i) => {
           return (y(i + 1) + 20);
       })
-      .attr('transform', `translate(${-1 * strokeWidth}, 0)`);
+      .attr('transform', `translate(-2, 0)`);
   }
 
   private drawEndLines(rootEl, data: Array<IGanttData>, className: string, x: any, y: any) {
@@ -227,11 +219,6 @@ export class NgD3GanttService {
       .data(data)
       .enter()
       .append('line')
-      .attr('stroke', (d: IGanttData) => {
-        // return d.color;
-        return '#d9d9d9';
-      })
-      .attr('stroke-width', 2)
       .attr('class', className)
       .attr('x1', (d: IGanttData) => {
           return x(new Date(d.end_date)) + 5;
@@ -270,7 +257,6 @@ export class NgD3GanttService {
   private drawCurrentDayLine(rootEl, width: number, height: number, x1: number, x2: number) {
     return rootEl
       .append('line')
-      .attr('width', 15)
       .attr('class', 'current-day-line')
       .attr('x1', x1)
       .attr('x2', x1)
@@ -327,22 +313,18 @@ export class NgD3GanttService {
     const emptyBlockPos = emptyBlockHeight - emptyBlockHeight / 5;
     const EMPTYBLOCK = rootEl
       .append('g')
-      .attr('class', 'EmptyMessageBlock')
-      // .attr('transform', `translate(${EmptyBlockX}, 20)`);
+      .attr('class', 'empty-message-block')
       .attr('transform', `translate(${EmptyBlockX}, ${emptyBlockPos})`);
     EMPTYBLOCK
         .append('rect')
-        .attr('fill', 'transparent')
+        .attr('class', 'empty-message-rect')
         .attr('x', 0)
         .attr('width', emptyBlockWidth)
         .attr('height', emptyBlockHeight);
 
     const textBlock = EMPTYBLOCK
         .append('text')
-        .attr('class', 'EmptyMessage')
-        .attr('font-size', 16)
-        .attr('font-weight', 'bold')
-        // .attr('y', emptyBlockHeight)
+        .attr('class', 'empty-message')
         .text('No data in chart.'); // make this a config
 
     const EmptyMessageWidth = textBlock.node().getComputedTextLength();
@@ -356,7 +338,6 @@ export class NgD3GanttService {
       .append('g')
       .attr('class', className)
       .attr('transform', (d, i) => {
-        // const position = Math.abs(xFn(d) + boxPadding);
         return `translate( ${boxPadding}, ${(yFn(i + 1) + blockInfoHeight)})`;
       });
   }
@@ -384,16 +365,14 @@ export class NgD3GanttService {
   private drawProgressBar(blockInfo, dateBoundary, domainFn: (d: IGanttData) => number, durationFn: (d: IGanttData) => string ) {
     // bar space
     blockInfo.append('rect')
-        .attr('class', 'ProgressBar')
-        .attr('fill', '#ddd')
+        .attr('class', 'progress-bar')
         .attr('width', d => {
           const maxProgressBarWidth = this.getWidth(d, dateBoundary, domainFn) * .95;
           return d.completion_percentage === undefined ? 0 : maxProgressBarWidth;
         });
     // progressbar fill
     blockInfo.append('rect')
-      .attr('class', 'ProgressBar ProgressBar-Fill')
-      .attr('fill', 'red')
+      .attr('class', 'progress-bar progress-bar-fill')
       .attr('width', d => {
           if (d.completion_percentage === undefined) {
             return 0;
@@ -402,7 +381,7 @@ export class NgD3GanttService {
             return ((d.completion_percentage * maxProgressBarWidth) / 100);
           }
       });
-    blockInfo.selectAll('.ProgressBar')
+    blockInfo.selectAll('.progress-bar')
       .attr('rx', 5)
       .attr('ry', 5)
       .attr('y', 30)

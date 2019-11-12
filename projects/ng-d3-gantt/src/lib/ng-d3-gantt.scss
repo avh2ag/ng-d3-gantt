@@ -1,17 +1,45 @@
-$date-stroke: #eee;
+$fill-primary:#fff;
+$fill-secondary: #e7e7e7;
+
+$stroke-primary: #ccc;
+$stroke-secondary: #bbb;
+$stroke-accent: #d9d9d9;
+
+$date-stroke: $stroke-primary;
+$date-fill: $fill-secondary;
+$rect-fill: $fill-primary;
+
+$current-day-color: #60bdf1;
+
+$progress-bar-container-fill: $stroke-primary;
+$progress-bar-progress-fill: $current-day-color;
 // @TO Do Style cleanup for variables
 .gantt-chart {
   min-width: 500px;
   overflow: auto;
+
+  /* Chart level configs */
+  .draw_area {
+    background: transparent;
+  }
+  .chart-title {
+    font-size: 24px;
+    font-weight: bold;
+  }
+  .time-series {
+    background: transparent;
+    font-size: 20px;
+    font-weight: 500;
+  }
+
   .gantt-entry-box {
     cursor: pointer;
   }
 
   .gantt-entry-rect {
-    fill: #fff;
-    stroke: #ccc;
+    fill: $fill-primary;
+    stroke: $stroke-primary;
     stroke-width: 1;
-    border-radius: 10px;
   }
 
   .title {
@@ -36,11 +64,16 @@ $date-stroke: #eee;
     stroke-width: 1;
   }
   .date-block, .date-block-outline {
-    fill: #fff;
+    fill: $date-fill;
     stroke: $date-stroke;
   }
   .start-lines, .end-lines {
     stroke-width: 2;
+    stroke: $stroke-accent;
+  }
+
+  .empty-message-rect {
+    fill: transparent;
   }
 
   .empty_message_block {
@@ -48,13 +81,22 @@ $date-stroke: #eee;
     border-radius: 4px;
   }
 
+  .empty-message {
+    font-size: 16px;
+    font-weight: bold;
+  }
+
   .current-day-line {
-    stroke: #60bdf1;
+    stroke: $current-day-color;
     stroke-width: 3;
   }
+
+  .progress-bar {
+    fill: $progress-bar-container-fill;
+  }
+
+  .progress-bar.progress-bar-fill {
+    fill: $progress-bar-progress-fill;
+  }
+
 }
-// body {
-//   font-family: 'Open Sans', sans-serif;
-// }
-
-
