@@ -1,8 +1,12 @@
 <section>
-  <ng-d3-gantt [buttonClasses]="buttonClasses" chartElementId="first-chart" [config]="config" [data]="data" >
-  </ng-d3-gantt>
+  <div style="margin:1em;">
+    <button (click)="switchConfig()" >Toggle Config</button>
+  </div>
+  <ng-d3-gantt [buttonClasses]="buttonClasses" chartElementId="first-chart" [config]="config" [data]="dataAsync | async" >
+    </ng-d3-gantt>
+
   <div style="display:flex;">
-    <div class="override" style="width:30%; height:500px; overflow:scroll;">
+    <div class="override" style="width:30%; height:500px; overflow:scroll; position:relative">
       <ng-d3-gantt [buttonClasses]="buttonClasses" chartElementId="second-chart" [config]="config" [data]="data" >
       </ng-d3-gantt>
     </div>

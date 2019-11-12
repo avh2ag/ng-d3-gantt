@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { IGanttData } from 'ng-d3-gantt';
+import { Component, ChangeDetectorRef } from '@angular/core';
+import { IGanttData, IGanttConfig } from 'ng-d3-gantt';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -7,6 +8,7 @@ import { IGanttData } from 'ng-d3-gantt';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
+  constructor(private cd: ChangeDetectorRef) {}
   title = 'd3-gantt';
   public buttonClasses = 'mat-raised-button mat-button-base mat-primary';
   public data: Array<IGanttData> = [
@@ -56,6 +58,8 @@ export class AppComponent {
       color: '#423db6',
     }
   ];
+  public dataAsync = of(this.data);
+  public isDefaultConfig = true;
 
   public cycles = [
     {
@@ -84,8 +88,7 @@ export class AppComponent {
     }
   ];
   public chartContainerName = 'test-container';
-  public config = {
-    // data: this.data, // Your actuall data
+  public config: IGanttConfig = {
     element: `#${this.chartContainerName}`, // remove, make separate input
     box_padding: 8, // Padding for the blocks in d3 units not pixels
     // metrics: {type: 'overall', years: [2016, 2017, 2018]}, // Type of gantt
@@ -105,4 +108,16 @@ export class AppComponent {
       console.log('Clicked On' + location);
     }
   };
+
+  public switchConfig() {
+    const testConfig = {...this.config};
+    if (this.isDefaultConfig) {
+      testConfig.metrics = {type: 'monthly', month: 'March 2017'};
+    } else {
+      testConfig.metrics = {type: 'yearly', year: 2019};
+    }
+    this.config = {...testConfig };
+    // this.cd.markForCheck();
+    this.isDefaultConfig = !this.isDefaultConfig;
+  }
 }

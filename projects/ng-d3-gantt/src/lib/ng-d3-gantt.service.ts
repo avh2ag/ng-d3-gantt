@@ -10,19 +10,10 @@ const moment = moment_;
   providedIn: 'root'
 })
 export class NgD3GanttService {
-  private PROGRESSBAR_WIDTH: number;
-  private PROGRESSBAR_BOUNDARY: number;
-  private EMPTYBLOCK_HEIGHT: number;
-  private BUTTON_COLOR: string;
   private margin: { top: number, right: number, bottom: number, left: number };
-
   private currentDay: { start_date: Date, end_date: Date };
 
   constructor() {
-    this.PROGRESSBAR_WIDTH = 200;
-    this.PROGRESSBAR_BOUNDARY = 250;
-    this.EMPTYBLOCK_HEIGHT = 150;
-    this.BUTTON_COLOR = '#15bfd8';
     this.currentDay = {
       start_date: moment().startOf('day').toDate(),
       end_date: moment().endOf('day').toDate()
@@ -112,10 +103,9 @@ export class NgD3GanttService {
     const chartTitle = rootEl
       .append('div')
       .attr('class', 'graph chart-title')
-      .style('height', 35)
       .append('svg')
       .attr('width', width + this.margin.left + this.margin.right)
-      .attr('height', 35)
+      .attr('height', '100%')
       .append('g');
     const titleText = chartTitle.selectAll('.bar')
       .data(headerRanges)
@@ -143,10 +133,9 @@ export class NgD3GanttService {
     return rootEl
       .append('div')
       .attr('class', 'graph time-series')
-      .style('height', 40)
       .append('svg')
       .attr('width', width + this.margin.left + this.margin.right)
-      .attr('height', 40)
+      .attr('height', '100%')
       .append('g');
   }
 
@@ -316,12 +305,6 @@ export class NgD3GanttService {
       .append('g')
       .attr('class', 'empty-message-block')
       .attr('transform', `translate(${EmptyBlockX}, ${emptyBlockPos})`);
-    EMPTYBLOCK
-        .append('rect')
-        .attr('class', 'empty-message-rect')
-        .attr('x', 0)
-        .attr('width', emptyBlockWidth)
-        .attr('height', emptyBlockHeight);
 
     const textBlock = EMPTYBLOCK
         .append('text')
@@ -713,7 +696,7 @@ export class NgD3GanttService {
     this.drawTimeSeries(timeSeriesContainer, dateBoundary, subheaderRanges, x);
 
     if (data.length === 0) {
-      this.renderWithNoData(canvasArea, EMPTYBLOCK_WIDTH, this.EMPTYBLOCK_HEIGHT, CHART_WIDTH);
+      this.renderWithNoData(canvasArea, EMPTYBLOCK_WIDTH, 150, CHART_WIDTH);
     }
     /* End Chart Background */
     /* Block Content */

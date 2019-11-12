@@ -15,7 +15,7 @@ $active-color: #4894ff;
 
 $progress-bar-container-fill: $stroke-primary;
 $progress-bar-progress-fill: $active-color;
-// @TO Do Style cleanup for variables
+
 .gantt-chart {
   min-width: 500px;
   overflow: auto;
@@ -27,11 +27,13 @@ $progress-bar-progress-fill: $active-color;
   .chart-title {
     font-size: 24px;
     font-weight: bold;
+    height: 35px;
   }
   .time-series {
     background: transparent;
     font-size: 14px;
     font-weight: 500;
+    height: 40px;
   }
 
   .gantt-entry-box {

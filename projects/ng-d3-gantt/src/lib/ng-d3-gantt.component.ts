@@ -1,4 +1,5 @@
-import { Component, OnInit, Input, AfterViewInit, HostListener, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, Input, AfterViewInit, HostListener, ViewEncapsulation,
+  OnChanges, SimpleChanges, SimpleChange } from '@angular/core';
 import { NgD3GanttService } from './ng-d3-gantt.service';
 import { IGanttConfig, IGanttData } from './ng-d3-gantt.interface';
 
@@ -15,22 +16,44 @@ import { IGanttConfig, IGanttData } from './ng-d3-gantt.interface';
   providers: [NgD3GanttService],
   encapsulation: ViewEncapsulation.None
 })
-export class NgD3GanttComponent implements OnInit, AfterViewInit {
+// will likely need on changes
+export class NgD3GanttComponent implements OnInit, OnChanges, AfterViewInit {
   @Input() chartElementId = 'ng-d3-gantt-chart';
   @Input() data: Array<IGanttData> = [];
   @Input() config: IGanttConfig;
   @Input() buttonClasses = '';
+  private isInitialChartDrawn = false;
   constructor(private ganttService: NgD3GanttService) { }
 
   ngOnInit() {}
 
+  ngOnChanges(changes: SimpleChanges) {
+    const config: SimpleChange = changes.config;
+    const data: SimpleChange = changes.data;
+    const isConfigChanged = this.getIsPropertyChanged(config);
+    const isDataChanged = this.getIsPropertyChanged(data);
+    if (this.isInitialChartDrawn) {
+      if (isConfigChanged || isDataChanged) {
+        this.drawInitialChart();
+      }
+    }
+  }
+
   ngAfterViewInit() {
     this.drawInitialChart();
+    this.isInitialChartDrawn = true;
   }
 
   @HostListener('window:resize', ['$event'])
   onResize(event) {
     this.drawInitialChart();
+  }
+
+  private getIsPropertyChanged(change: SimpleChange) {
+    if (change) {
+      return JSON.stringify(change.previousValue) !== JSON.stringify(change.currentValue);
+    }
+    return false;
   }
 
   public goToPrevious() {
