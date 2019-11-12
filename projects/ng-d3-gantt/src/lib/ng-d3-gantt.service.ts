@@ -407,10 +407,6 @@ export class NgD3GanttService {
       .attr('ry', 5)
       .attr('y', 30)
       .attr('height', 7)
-      // .attr('x', d => {
-      //   return this.calculateStringLengthOffset(d.subtitle)
-      //     + this.calculateStringLengthOffset(durationFn(d));
-      // })
       .attr('x', 0);
   }
 
@@ -474,9 +470,16 @@ export class NgD3GanttService {
         .enter()
         .append('g')
         .attr('class', className)
+        .attr('id', (d, i) => {
+          return this.getBlockId(d);
+        })
         .attr('transform', (d, i)  => {
             return 'translate(' + domainFn(new Date(d.start_date)) + ',' + 0 + ')';
         });
+  }
+
+  private getBlockId(d: IGanttData) {
+    return `block-${d.id}`;
   }
 
   private drawBlockRectangles(rootEl, className: string, blockHeight: number, xFn: (d) => number, yFn: (d) => number) {
@@ -523,17 +526,10 @@ export class NgD3GanttService {
   }
 
   /* helper methods */
-  private getDurationOpacity(d: IGanttData, dateBoundary, domainFn: (d: IGanttData) => number) {
-    const durationOffset = this.calculateStringLengthOffset(d.subtitle);
-    const width = this.getWidth(d, dateBoundary, domainFn);
-    return Number(width > durationOffset);
-  }
-
   // this entire method is wonky and broken
-  private calculateStringLengthOffset(text: string) {
-    const fontSizeOffset = 6.5; // this is goofy, need to convert string length to d3 domain units
+  private calculateStringLengthOffset(text: string, fontSize: number) {
     const paddingRight = 5;
-    return text.length * fontSizeOffset + paddingRight;
+    return text.length * fontSize + paddingRight;
   }
 
   private getMonthsOftheYear(year) {
@@ -642,7 +638,6 @@ export class NgD3GanttService {
     textBlock.each((d: IGanttData, i) => {
       let textLength = textBlock.node().getComputedTextLength();
       let text = textBlock.text();
-      // console.log(textLength, text, width)
       while (textLength > (width - padding - 10) && text.length > 0) {
         text = text.slice(0, -1);
         textBlock.text(text + '...');
@@ -651,7 +646,28 @@ export class NgD3GanttService {
     });
   }
 
-
+  private getLongestFieldName(d: IGanttData) {
+    const titleLen = d.title.length;
+    const subtitleLen = d.subtitle.length;
+    const duration = this.getDuration(d);
+    const durationLen = duration.length;
+    if (subtitleLen > durationLen) {
+      if (titleLen > subtitleLen && subtitleLen > durationLen) {
+        return 'title';
+      } else {
+        return 'subtitle';
+      }
+    } else {
+      if (durationLen > titleLen) {
+        return 'duration';
+      } else {
+        return 'title';
+      }
+    }
+  }
+  private getFontSize(parentEl, selector: string): number {
+    return parseFloat(parentEl.select(selector).style('font-size'));
+  }
   /* end helper methods */
 
   public draw(state: string, data: Array<IGanttData>, config: IGanttConfig, elementId: string) {
@@ -727,7 +743,7 @@ export class NgD3GanttService {
     const blockArea = this.drawBlockRectangles(Blocks, blockRectClass, blockHeight, x, y);
     const blockContentClass = 'gantt-entry';
     const blockContent = this.drawBlockContent(Blocks, blockContentClass, config.box_padding, dateBoundary, x);
-    const blockTitleClass = 'block-title';
+    const blockTitleClass = `title`;
     const blockTitle = this.drawBlockTitle(blockContent, blockTitleClass, y, config.box_padding);
     const blockInfoClass = 'block-info';
     const blockInfoContainer = this.drawblockInfoContainer(blockContent, config.box_padding, blockInfoClass, 40, y);
@@ -753,84 +769,71 @@ export class NgD3GanttService {
           config.onClick(d);
         })
         .on('mouseover', (d, i) => {
-            Blocks.selectAll(`.${blockContentClass}`)
-                .style('opacity', (b, i) => {
-                    return (d.id === b.id) ? 1 : 0.3;
-                });
 
-            canvasArea.selectAll(`.${startLineClassName}, .${endLineClassName}`)
-              .style('stroke-width', (b, i) => {
-                  return (d.id === b.id) ? 3 : 2;
-              })
-              .style('stroke', (b, i) => {
-                return (d.id === b.id) ? '#4894ff' : '#d9d9d9';
+          const filteredEntry = blockContent.filter((entry: IGanttData, i) => {
+            return entry.id === d.id;
+          });
+          filteredEntry.selectAll(`.${blockTitleClass}`)
+            .text( d => d.title );
+          filteredEntry.selectAll(`.duration`)
+            .text(d => {
+              return this.getDuration(d);
+            });
+          filteredEntry.selectAll('.subtitle')
+            .text(d => {
+              return d.subtitle;
+          });
+          const filteredRects = Blocks.filter( (entry: IGanttData) => {
+            return entry.id === d.id;
+          })
+            .selectAll(`.${blockRectClass}`)
+            .style('stroke-width', b => {
+              return d.id === b.id ? 2 : 1;
+            })
+            .style('stroke', b => {
+              return d.id === b.id ? '#bbb' : '#ccc';
+            })
+            .attr('width', b => {
+              const width = this.getActualWidth(b, x) + config.box_padding;
+              const currFieldText = this.getLongestFieldName(b); // switch this to return the field
+              const fontSizeOffset = this.getFontSize(filteredEntry, `.${currFieldText}`) / 3;
+              const textForWidthCheck = b[currFieldText] ? b[currFieldText] : 'mmm dd - mmm dd';
+              const currFieldWidth = this.calculateStringLengthOffset(textForWidthCheck, fontSizeOffset);
+              return width + currFieldWidth;
+            });
+
+          Blocks.selectAll(`.${blockContentClass}`)
+              .style('opacity', (b, i) => {
+                  return (d.id === b.id) ? 1 : 0.3;
               });
 
-            Blocks.selectAll(`.${blockRectClass}`)
-              .style('stroke-width', b => {
-                return d.id === b.id ? 2 : 1;
-              })
-              .style('stroke', b => {
-                return d.id === b.id ? '#bbb' : '#ccc';
-              })
-              .attr('width', b => {
-                  if (d.id === b.id) {
-                    if (this.startsBefore(d, dateBoundary.start_date) || this.endsAfter(d, dateBoundary.end_date)) {
-                      const width = this.getWidth(b, dateBoundary, x);
-                      if (width < 500) {
-                          // replace this 10 with config.box padding
-                          return (this.getActualWidth(b, x) + (500 - width) + 10);
-                        }
-                    }
-                    return ((d3.max([this.getActualWidth(b, x), 500])) + 10);
-                  } else {
-                    return this.getActualWidth(b, x);
-                  }
-              });
+          canvasArea.selectAll(`.${startLineClassName}, .${endLineClassName}`)
+            .style('stroke-width', (b, i) => {
+                return (d.id === b.id) ? 3 : 2;
+            })
+            .style('stroke', (b, i) => {
+              return (d.id === b.id) ? '#4894ff' : '#d9d9d9';
+            });
 
-            Blocks.selectAll('.Duration')
-              .attr('opacity', b => {
-                if (b.id === d.id) {
-                  return 1;
-                } else {
-                  return this.getDurationOpacity(b, dateBoundary, x);
+          Blocks.selectAll('.TermType')
+            .attr('opacity', (b) => {
+                return Number(d.id === b.id || this.getWidth(b, dateBoundary, x) > 80);
+            });
+
+          timeSeriesContainer.selectAll('.date')
+            .style('fill', (b, i) => {
+                if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
+                || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
+                  return '#4894ff';
                 }
-              });
-
-            Blocks.selectAll('.TermType')
-              .attr('opacity', (b) => {
-                  return Number(d.id === b.id || this.getWidth(b, dateBoundary, x) > 80);
-              });
-
-            timeSeriesContainer.selectAll('.date')
-              .style('fill', (b, i) => {
-                  if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
-                  || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
-                    return '#4894ff';
-                  }
-              });
-            timeSeriesContainer.selectAll('.date-block')
-              .style('fill', (b, i) => {
-                  if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
-                  || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
-                    return '#f0f6f9';
-                  }
-              });
-
-            const filteredEntry = blockContent.filter((entry: IGanttData, i) => {
-                return entry.id === d.id;
-              });
-            filteredEntry.selectAll(`.${blockTitleClass}`)
-              .text( d => d.title );
-            filteredEntry.selectAll(`.duration`)
-              .text(d => {
-                return this.getDuration(d);
-              });
-            filteredEntry.selectAll('.subtitle')
-              .text(d => {
-                console.log(d);
-                return d.subtitle;
-              });
+            });
+          timeSeriesContainer.selectAll('.date-block')
+            .style('fill', (b, i) => {
+                if (moment(b.start_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')
+                || moment(b.end_date, 'MM/DD/YYYY').isBetween(d.start_date, d.end_date, 'days')) {
+                  return '#f0f6f9';
+                }
+            });
 
         })
         .on('mouseout', (d, i) => {
@@ -849,13 +852,6 @@ export class NgD3GanttService {
                 .style('stroke', '#ccc')
                 .style('stroke-width', 1);
 
-            Blocks.selectAll('.Duration')
-                .attr('opacity', b => {
-                  if (d.id === b.id) {
-                    return this.getDurationOpacity(b, dateBoundary, x);
-                  }
-                });
-
             Blocks.selectAll('.TermType')
                 .attr('opacity', b => {
                   return Number(this.getWidth(b, dateBoundary, x) > 80);
@@ -865,12 +861,6 @@ export class NgD3GanttService {
             timeSeriesContainer.selectAll('.date-block')
                 .style('fill', '');
 
-            // blockContent.filter((entry: IGanttData, i) => {
-            //   return entry.id === d.id;
-            // }).each((entry: IGanttData, i) => {
-            //   const width = this.getWidth(entry, dateBoundary, x) + config.box_padding;
-            //   this.trimTitle(entry, blockContent, blockTitleClass, width, config.box_padding);
-            // });
             blockContent.each( (entry: IGanttData, i) => {
               if (d.id === entry.id) {
                 const width = this.getWidth(entry, dateBoundary, x) + config.box_padding;
