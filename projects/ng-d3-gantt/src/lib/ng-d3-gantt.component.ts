@@ -7,8 +7,6 @@ import { IGanttConfig, IGanttData } from './ng-d3-gantt.interface';
   // tslint:disable-next-line: component-selector
   selector: 'ng-d3-gantt',
   template: `
-    <button [class]="buttonClasses" (click)="goToPrevious()">Previous</button>
-    <button [class]="buttonClasses" (click)="goToNext()">Next</button>
     <div [id]="chartElementId" class="gantt-chart">
     </div>
   `,
@@ -21,7 +19,6 @@ export class NgD3GanttComponent implements OnInit, OnChanges, AfterViewInit {
   @Input() chartElementId = 'ng-d3-gantt-chart';
   @Input() data: Array<IGanttData> = [];
   @Input() config: IGanttConfig;
-  @Input() buttonClasses = '';
   private isInitialChartDrawn = false;
   constructor(private ganttService: NgD3GanttService) { }
 

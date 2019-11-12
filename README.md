@@ -1,27 +1,103 @@
 # D3Gantt
 
+  
+
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 8.3.10.
+
+  
 
 ## Development server
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+  
 
-## Code scaffolding
+Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+  
+
+To have angular continuously build the project library as you develop, run `ng build ng-d3-gantt-chart --watch`
+
+  
 
 ## Build
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+Run `ng build ng-d3-gantt` to build the project component library. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
 
-## Running unit tests
+ To publish to npm, after building, run `npm publish` from the dist folder.
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## Configuring Ng D3 Gantt Chart
 
-## Running end-to-end tests
+### Configuration Options:
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+1. IGanttConfig
+```
+export  interface  IGanttConfig {
 
-## Further help
+box_padding:  number; // padding in d3 units in the box
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+metrics:  IGanttMetrics; // describes the scale of the graph 
+
+isShowProgressBar:  boolean; // whether to allow progress bars within each box
+
+isShowGridlines:  boolean; // toggle gridlines on and off
+
+emptyText?:  string; // text to display when the grid is empty
+
+onClick: (data:  any) =>  void; // hook for when a box is clicked
+
+}
+
+```
+  2. IGanttMetrics
+```
+export  interface  IGanttMetrics {
+
+type:  'overall'  |  'quarterly'  |  'sprint'  |  'monthly'  |  'yearly';
+
+year?:  number;
+
+years?:  Array<number>;
+
+month?:  string;
+
+months?:  Array<string>;
+
+cycles?:  Array<IGanttCycle>;
+
+}
+
+```
+
+3. Custom Units of Time
+```
+export  interface  IGanttCycle {
+
+id?:  number;
+
+name:  string;
+
+start_date:  string  |  Date;
+
+end_date:  string  |  Date;
+
+}
+```
+4. Structure of Data  
+```
+export  interface  IGanttData {
+
+id:  number;
+
+title:  string;
+
+subtitle:  string; 
+
+start_date:  string; // date or string
+
+end_date:  string; // date or string
+
+completion_percentage?:  number; // value to use in the progress bar
+
+}
+
+```
+

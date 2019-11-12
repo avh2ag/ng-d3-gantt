@@ -89,7 +89,6 @@ export class AppComponent {
   ];
   public chartContainerName = 'test-container';
   public config: IGanttConfig = {
-    element: `#${this.chartContainerName}`, // remove, make separate input
     box_padding: 8, // Padding for the blocks in d3 units not pixels
     // metrics: {type: 'overall', years: [2016, 2017, 2018]}, // Type of gantt
     // metrics: {type: 'sprint', year: 2017, cycles: this.cycles}, // Type of gantt
@@ -100,12 +99,6 @@ export class AppComponent {
     isShowGridlines: true,
     onClick: (data) => {
       console.log('onClick called on ', data );
-    },
-    onEmptyButtonClick: () => {
-      console.log('Empty Clicked');
-    },
-    onAreaClick: (location) => {
-      console.log('Clicked On' + location);
     }
   };
 

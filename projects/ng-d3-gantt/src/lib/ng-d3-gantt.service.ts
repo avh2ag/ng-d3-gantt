@@ -298,7 +298,7 @@ export class NgD3GanttService {
         });
   }
 
-  private renderWithNoData(rootEl, emptyBlockWidth: number, emptyBlockHeight: number, chartWidth: number) {
+  private renderWithNoData(rootEl, emptyBlockWidth: number, emptyBlockHeight: number, chartWidth: number, emptyText: string) {
     const EmptyBlockX = ((chartWidth / 2) - (emptyBlockWidth / 2));
     const emptyBlockPos = emptyBlockHeight - emptyBlockHeight / 5;
     const EMPTYBLOCK = rootEl
@@ -309,7 +309,7 @@ export class NgD3GanttService {
     const textBlock = EMPTYBLOCK
         .append('text')
         .attr('class', 'empty-message')
-        .text('No data in chart.'); // make this a config
+        .text(emptyText); // make this a config
 
     const EmptyMessageWidth = textBlock.node().getComputedTextLength();
     const EmptyMessageX = Math.abs((emptyBlockWidth / 2) - (EmptyMessageWidth / 2));
@@ -696,7 +696,8 @@ export class NgD3GanttService {
     this.drawTimeSeries(timeSeriesContainer, dateBoundary, subheaderRanges, x);
 
     if (data.length === 0) {
-      this.renderWithNoData(canvasArea, EMPTYBLOCK_WIDTH, 150, CHART_WIDTH);
+      const emptyText = config.emptyText ? config.emptyText : 'No data in chart';
+      this.renderWithNoData(canvasArea, EMPTYBLOCK_WIDTH, 150, CHART_WIDTH, emptyText);
     }
     /* End Chart Background */
     /* Block Content */
