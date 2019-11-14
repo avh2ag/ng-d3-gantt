@@ -447,13 +447,16 @@ export class NgD3GanttService {
     return `block-${d.id}`;
   }
 
-  private drawBlockRectangles(rootEl, className: string, blockHeight: number, xFn: (d) => number, yFn: (d) => number) {
+  private drawBlockRectangles(rootEl, className: string, blockHeight: number, progressBarContainerHeight: number,
+                              xFn: (d) => number, yFn: (d) => number) {
     return rootEl
         .append('rect')
         .attr('class', className)
         .attr('rx', 2)
         .attr('ry', 2)
-        .attr('height', blockHeight)
+        .attr('height', (d, i) => {
+          return d.completion_percentage ? blockHeight : blockHeight - progressBarContainerHeight;
+        })
         .attr('x', 5)
         .attr('y', (d, i) => {
           return yFn(i + 1);
@@ -646,7 +649,9 @@ export class NgD3GanttService {
     const ROOT_ELEMENT = d3.select(`#${elementId}`);
     const CHART_WIDTH = ROOT_ELEMENT._groups[0][0].offsetWidth;
     const EMPTYBLOCK_WIDTH = ((80 * CHART_WIDTH) / 100);
-    const MAX_RECT_HEIGHT = 110;
+    const defaultHeight = 100;
+    const progressBarContainerHeight = 10;
+    const MAX_RECT_HEIGHT = config.isShowProgressBar ? defaultHeight : defaultHeight - progressBarContainerHeight;
     const CHART_HEIGHT = d3.max([((data.length * MAX_RECT_HEIGHT) + MAX_RECT_HEIGHT), 300]);
 
 
@@ -703,13 +708,13 @@ export class NgD3GanttService {
     }
     /* End Chart Background */
     /* Block Content */
-    const blockHeight = MAX_RECT_HEIGHT - config.box_padding;
+    let blockHeight = MAX_RECT_HEIGHT - config.box_padding;
     const blockContainerClass = 'blocks';
     const blockContainer = this.drawBlockContainer(canvasArea, blockContainerClass);
     const blocksClass = 'gantt-entry-box'; // abstract up
     const Blocks = this.drawBlocks(blockContainer, data, x, blocksClass);
     const blockRectClass = 'gantt-entry-rect';
-    const blockArea = this.drawBlockRectangles(Blocks, blockRectClass, blockHeight, x, y);
+    const blockArea = this.drawBlockRectangles(Blocks, blockRectClass, blockHeight, progressBarContainerHeight, x, y);
     const blockContentClass = 'gantt-entry';
     const blockContent = this.drawBlockContent(Blocks, blockContentClass, config.box_padding, dateBoundary, x, config.dateFormat);
     const blockTitleClass = `title`;

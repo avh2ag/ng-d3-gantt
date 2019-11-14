@@ -52,13 +52,16 @@ $progress-bar-progress-fill: $active-color;
 
   .title {
     font-weight: 800;
-    font-size: 20px;
+    font-size: 16px;
   }
 
   .block-info-text {
     fill: black;
     font-size: 14px;
-    text-transform: uppercase;
+    // text-transform: uppercase;
+  }
+  .block-info-text.duration {
+    fill: #757575;
   }
 
   .date.active {
