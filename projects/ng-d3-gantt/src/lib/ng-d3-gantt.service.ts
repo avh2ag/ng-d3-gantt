@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import * as d3 from 'd3';
 import { IGanttConfig, IGanttData, IGanttCycle } from './ng-d3-gantt.interface';
 import * as moment_ from 'moment';
-import { config } from 'rxjs';
 const moment = moment_;
 
 // tslint:disable: no-shadowed-variable
@@ -326,8 +325,9 @@ export class NgD3GanttService {
       });
   }
 
-  private drawblockInfoContent(rootEl, dateBoundary, blockInfoTextClass: string,
-                               domainFn: (d: IGanttData) => number, durationFn: (d: IGanttData) => string) {
+  private drawblockInfoContent(rootEl, dateBoundary, blockInfoTextClass: string, dateFormat: string,
+                               domainFn: (d: IGanttData) => number,
+                               durationFn: (d: IGanttData, dateFormat: string) => string) {
     // Subtitle
     const subtitle = rootEl.append('text')
           .attr('class', `${blockInfoTextClass} subtitle`)
@@ -342,12 +342,13 @@ export class NgD3GanttService {
               // return this.getDurationOpacity(d, dateBoundary, domainFn) > 0 ? 20 : 0;
             })
             .text( (d) => {
-              return `${durationFn(d)}`;
+              return `${durationFn(d, dateFormat)}`;
             });
   }
 
-  private drawProgressBar(blockInfo, dateBoundary, domainFn: (d: IGanttData) => number,
-                          durationFn: (d: IGanttData) => string, dateFormat: string) {
+  private drawProgressBar(blockInfo, dateBoundary,
+                          domainFn: (d: IGanttData) => number,
+                          durationFn: (d: IGanttData, dateFormat: string) => string, dateFormat: string) {
     // bar space
     blockInfo.append('rect')
         .attr('class', 'progress-bar')
@@ -587,9 +588,9 @@ export class NgD3GanttService {
     };
   }
 
-  private getDuration(d: IGanttData) {
-    const startDate = moment(d.start_date, 'MM/DD/YYYY').format('DD MMM');
-    const endDate = moment(d.end_date, 'MM/DD/YYYY').format('DD MMM');
+  private getDuration(d: IGanttData, dateFormat: string) {
+    const startDate = moment(d.start_date, dateFormat).format('DD MMM');
+    const endDate = moment(d.end_date, dateFormat).format('DD MMM');
     return startDate + ' - ' + endDate;
   }
 
@@ -609,10 +610,10 @@ export class NgD3GanttService {
     });
   }
 
-  private getLongestFieldName(d: IGanttData) {
+  private getLongestFieldName(d: IGanttData, dateFormat: string) {
     const titleLen = d.title.length;
     const subtitleLen = d.subtitle.length;
-    const duration = this.getDuration(d);
+    const duration = this.getDuration(d, dateFormat);
     const durationLen = duration.length;
     if (subtitleLen > durationLen) {
       if (titleLen > subtitleLen && subtitleLen > durationLen) {
@@ -716,7 +717,7 @@ export class NgD3GanttService {
     const blockInfoClass = 'block-info';
     const blockInfoContainer = this.drawblockInfoContainer(blockContent, config.box_padding, blockInfoClass, 40, y);
     const blockInfoTextClass = 'block-info-text';
-    this.drawblockInfoContent(blockInfoContainer, dateBoundary, blockInfoTextClass, x, this.getDuration);
+    this.drawblockInfoContent(blockInfoContainer, dateBoundary, blockInfoTextClass, config.dateFormat, x, this.getDuration);
     if (config.isShowProgressBar) {
       this.drawProgressBar(blockInfoContainer, dateBoundary, x, this.getDuration, config.dateFormat); // to add extra config
     }
@@ -744,7 +745,7 @@ export class NgD3GanttService {
             .text( d => d.title );
           filteredEntry.selectAll(`.duration`)
             .text(d => {
-              return this.getDuration(d);
+              return this.getDuration(d, config.dateFormat);
             });
           filteredEntry.selectAll('.subtitle')
             .text(d => {
@@ -757,7 +758,7 @@ export class NgD3GanttService {
             .attr('class', `${blockRectClass} active`)
             .attr('width', b => {
               const width = this.getActualWidth(b, x) + config.box_padding;
-              const longestFieldName = this.getLongestFieldName(b); // switch this to return the field
+              const longestFieldName = this.getLongestFieldName(b, config.dateFormat); // switch this to return the field
               const isClippedText = filteredEntry.select(`.${longestFieldName}`).attr('is-clipped');
               if (isClippedText) {
                 const fontSizeOffset = this.getFontSize(filteredEntry, `.${longestFieldName}`) / 3;
