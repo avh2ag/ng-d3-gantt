@@ -30,6 +30,6 @@ export interface IGanttData {
   subtitle: string;
   start_date: string;
   end_date: string;
-  color: string;
+  color?: string;
   completion_percentage?: number;
 }

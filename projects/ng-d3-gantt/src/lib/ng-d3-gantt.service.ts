@@ -449,7 +449,7 @@ export class NgD3GanttService {
 
   private drawBlockRectangles(rootEl, className: string, blockHeight: number, progressBarContainerHeight: number,
                               xFn: (d) => number, yFn: (d) => number) {
-    return rootEl
+    const primaryRect = rootEl
         .append('rect')
         .attr('class', className)
         .attr('rx', 2)
@@ -464,6 +464,24 @@ export class NgD3GanttService {
         .attr('width', d => {
           return this.getActualWidth(d, xFn) + 5;
         });
+    const colorCode = rootEl.append('rect')
+      .attr('class', 'color-code')
+      .attr('x', 5)
+      .attr('y', (d, i) => {
+        return yFn(i + 1);
+      })
+      .attr('height', (d, i) => {
+        if (d.color && d.color.length > 0) {
+          return d.completion_percentage ? blockHeight : blockHeight - progressBarContainerHeight;
+        } else {
+          return 0;
+        }
+      })
+      .attr('width', 4)
+      .style('fill', (d, i) => {
+        return d.color && d.color.length > 0 ? d.color : 'transparent';
+      });
+    return primaryRect;
   }
 
   private drawBlockContent(rootEl, className: string, boxPadding: number, dateBoundary, xFn: (d) => number, dateFormat: string) {

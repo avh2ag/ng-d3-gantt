@@ -10,7 +10,6 @@ import { of } from 'rxjs';
 export class AppComponent {
   constructor(private cd: ChangeDetectorRef) {}
   title = 'd3-gantt';
-  public buttonClasses = 'mat-raised-button mat-button-base mat-primary';
   public data: Array<IGanttData> = [
     {
       id: 1,
@@ -55,7 +54,7 @@ export class AppComponent {
       end_date: '12/09/2017',
       subtitle: 'Short subtitle',
       completion_percentage: 29,
-      color: '#423db6',
+      // color: '#423db6',
     }
   ];
   public dataAsync = of(this.data);
