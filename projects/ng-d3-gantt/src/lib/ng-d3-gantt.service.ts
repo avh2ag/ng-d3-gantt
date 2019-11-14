@@ -782,13 +782,14 @@ export class NgD3GanttService {
             .attr('class', `${blockRectClass} active`)
             .attr('width', b => {
               const width = this.getActualWidth(b, x) + config.box_padding;
+              const getWidthVal = this.getWidth(b, dateBoundary, x, config.dateFormat);
               const longestFieldName = this.getLongestFieldName(b, config.dateFormat); // switch this to return the field
-              const isClippedText = filteredEntry.select(`.${longestFieldName}`).attr('is-clipped');
+              const longestFieldNode = filteredEntry.select(`.${longestFieldName}`);
+              const isClippedText = longestFieldNode.attr('is-clipped');
               if (isClippedText) {
-                const fontSizeOffset = this.getFontSize(filteredEntry, `.${longestFieldName}`) / 3;
-                const textForWidthCheck = b[longestFieldName] ? b[longestFieldName] : 'mmm dd - mmm dd';
-                const currFieldWidth = this.calculateStringLengthOffset(textForWidthCheck, fontSizeOffset);
-                return width + currFieldWidth;
+                const textWidth = longestFieldNode.node().getComputedTextLength();
+                const widthToAdd = Math.max(textWidth - getWidthVal, getWidthVal);
+                return width + widthToAdd + config.box_padding;
               } else {
                 return width;
               }
