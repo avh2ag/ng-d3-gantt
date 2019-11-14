@@ -32,4 +32,5 @@ export interface IGanttData {
   end_date: string;
   color?: string;
   completion_percentage?: number;
+  extras?: any;
 }
