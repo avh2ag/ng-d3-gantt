@@ -329,18 +329,18 @@ export class NgD3GanttService {
                                domainFn: (d: IGanttData) => number,
                                durationFn: (d: IGanttData, dateFormat: string) => string) {
     // Subtitle
+    const subtitleHeight = 12;
     const subtitle = rootEl.append('text')
           .attr('class', `${blockInfoTextClass} subtitle`)
           .text( (d) => {
             return d.subtitle;
-          }).attr('height', 20);
+          }).attr('height', subtitleHeight);
     // Duration
+    const subtitlePaddingY = 8;
+    const durationPosition = subtitleHeight * 1.5 + subtitlePaddingY;
     rootEl.append('text')
             .attr('class', `${blockInfoTextClass} duration`)
-            .attr('y', (d: IGanttData) => {
-              return subtitle.attr('height');
-              // return this.getDurationOpacity(d, dateBoundary, domainFn) > 0 ? 20 : 0;
-            })
+            .attr('y', durationPosition)
             .text( (d) => {
               return `${durationFn(d, dateFormat)}`;
             });
@@ -473,6 +473,7 @@ export class NgD3GanttService {
       .attr('transform', (d, i) => {
         if (this.startsBefore(d, dateBoundary.start_date, dateFormat) && this.getIsVisible(d, dateBoundary)) {
           const positionX = Math.abs(xFn(new Date(d.start_date))) + boxPadding;
+          console.log(positionX, d, dateBoundary.start_date);
           return `translate(${positionX}, ${boxPadding})`;
         } else {
           return `translate(${boxPadding}, ${boxPadding})`;
@@ -485,7 +486,7 @@ export class NgD3GanttService {
       .attr('class', className)
       .attr('x', padding)
       .attr('y', (d, i) => {
-          return (yFn(i + 1) + padding * 2);
+        return (yFn(i + 1) + padding * 2);
       })
       .text( (d) => {
           return d.title;
@@ -708,7 +709,7 @@ export class NgD3GanttService {
     }
     /* End Chart Background */
     /* Block Content */
-    let blockHeight = MAX_RECT_HEIGHT - config.box_padding;
+    const blockHeight = MAX_RECT_HEIGHT - config.box_padding;
     const blockContainerClass = 'blocks';
     const blockContainer = this.drawBlockContainer(canvasArea, blockContainerClass);
     const blocksClass = 'gantt-entry-box'; // abstract up
@@ -720,7 +721,7 @@ export class NgD3GanttService {
     const blockTitleClass = `title`;
     const blockTitle = this.drawBlockTitle(blockContent, blockTitleClass, y, config.box_padding);
     const blockInfoClass = 'block-info';
-    const blockInfoContainer = this.drawblockInfoContainer(blockContent, config.box_padding, blockInfoClass, 40, y);
+    const blockInfoContainer = this.drawblockInfoContainer(blockContent, config.box_padding, blockInfoClass, 26 + config.box_padding, y);
     const blockInfoTextClass = 'block-info-text';
     this.drawblockInfoContent(blockInfoContainer, dateBoundary, blockInfoTextClass, config.dateFormat, x, this.getDuration);
     if (config.isShowProgressBar) {
