@@ -3,6 +3,7 @@ export interface IGanttConfig {
   metrics: IGanttMetrics;
   isShowProgressBar: boolean;
   isShowGridlines: boolean;
+  dateFormat: string;
   emptyText?: string;
   onClick: (data: any) => void;
 }

@@ -89,6 +89,7 @@ export class AppComponent {
   ];
   public chartContainerName = 'test-container';
   public config: IGanttConfig = {
+    dateFormat: 'MM/DD/YYYY',
     box_padding: 8, // Padding for the blocks in d3 units not pixels
     // metrics: {type: 'overall', years: [2016, 2017, 2018]}, // Type of gantt
     // metrics: {type: 'sprint', year: 2017, cycles: this.cycles}, // Type of gantt
