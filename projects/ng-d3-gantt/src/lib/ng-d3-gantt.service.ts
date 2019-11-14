@@ -473,7 +473,7 @@ export class NgD3GanttService {
       .attr('transform', (d, i) => {
         if (this.startsBefore(d, dateBoundary.start_date, dateFormat) && this.getIsVisible(d, dateBoundary)) {
           const positionX = Math.abs(xFn(new Date(d.start_date))) + boxPadding;
-          console.log(positionX, d, dateBoundary.start_date);
+          // console.log(positionX, d, dateBoundary.start_date);
           return `translate(${positionX}, ${boxPadding})`;
         } else {
           return `translate(${boxPadding}, ${boxPadding})`;

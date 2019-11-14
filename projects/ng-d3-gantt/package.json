@@ -1,6 +1,6 @@
 {
   "name": "ng-d3-gantt",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "author": "Alex Harasty",
   "license": "MIT",
   "peerDependencies": {
