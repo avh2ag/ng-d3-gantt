@@ -111,10 +111,10 @@ export class NgD3GanttService {
       .enter().append('text')
       .attr('class', 'first-title')
       .attr('y', -5)
-      .attr('x', (d: IGanttData) => {
+      .attr('x', (d) => {
         return x(new Date(d.start_date)) + (this.getWidth(d, dateBoundary, x, dateFormat) / 2);
       })
-      .attr('width', (d: IGanttData) => {
+      .attr('width', (d) => {
         return this.getWidth(d, dateBoundary, x, dateFormat);
       })
       .attr('height', y.bandwidth())
@@ -403,11 +403,11 @@ export class NgD3GanttService {
       if (config.metrics.type === 'quarterly') {
         months = config.metrics.months;
         subheaderRanges = this.getMonthsRange(months);
-        const year = moment(config.metrics.months[0], 'MMMM YYYY').format('YYYY');
+        // const year = moment(config.metrics.months[0], 'MMMM YYYY').format('YYYY');
         headerRanges = [{
             start_date: moment(config.metrics.months[0], 'MMMM YYYY').startOf('month').toDate(),
             end_date: moment(config.metrics.months[config.metrics.months.length - 1], 'MMMM YYYY').endOf('month').toDate(),
-            name: year,
+            name: '',
         }];
       } else if (config.metrics.type === 'yearly') {
         months = this.getMonthsOftheYear(config.metrics.year);
@@ -715,12 +715,16 @@ export class NgD3GanttService {
     if (config.isShowGridlines) {
       this.drawGridLines(canvasArea, subheaderRanges, x, height);
     }
+    const isDrawCurrentDayLine = moment(this.currentDay.start_date)
+      .isBetween(moment(dateBoundary.start_date), moment(dateBoundary.end_date));
+    if (isDrawCurrentDayLine) {
+      this.drawCurrentDayLine(canvasArea,
+        this.getActualWidth(this.currentDay, x),
+        height,
+        x(new Date(this.currentDay.start_date)),
+        x(new Date(this.currentDay.start_date)));
+    }
 
-    this.drawCurrentDayLine(canvasArea,
-      this.getActualWidth(this.currentDay, x),
-      height,
-      x(new Date(this.currentDay.start_date)),
-      x(new Date(this.currentDay.start_date)));
 
     this.drawTimeSeries(timeSeriesContainer, dateBoundary, subheaderRanges, x, config.dateFormat);
 
