@@ -610,9 +610,12 @@ export class NgD3GanttService {
     };
   }
 
-  private getDuration(d: IGanttData, dateFormat: string) {
-    const startDate = moment(d.start_date, dateFormat).format('DD MMM');
-    const endDate = moment(d.end_date, dateFormat).format('DD MMM');
+  private getDuration(d: IGanttData, dateFormat: string, displayFormat?: string) {
+    if (!displayFormat) {
+      displayFormat = 'MMM DD YYYY';
+    }
+    const startDate = moment(d.start_date, dateFormat).format(displayFormat);
+    const endDate = moment(d.end_date, dateFormat).format(displayFormat);
     return startDate + ' - ' + endDate;
   }
 
