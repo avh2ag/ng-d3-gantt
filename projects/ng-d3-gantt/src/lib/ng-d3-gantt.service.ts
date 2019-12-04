@@ -261,7 +261,6 @@ export class NgD3GanttService {
       .attr('r', circleRadius)
       /* tslint:disable-next-line */
       .on('mouseover', function() {
-        console.log(tooltip.style('visibility'));
         tooltip.style('visibility', 'visible');
       })
       /* tslint:disable-next-line */
@@ -315,7 +314,7 @@ export class NgD3GanttService {
           return d.name;
         })
         .attr('class', d => {
-            return 'date date-title date date-' + moment(d).format('MMYYYY');
+            return ' date-title date date-' + moment(d).format('MMYYYY');
         });
   }
 
@@ -513,7 +512,6 @@ export class NgD3GanttService {
       .attr('transform', (d, i) => {
         if (this.startsBefore(d, dateBoundary.start_date, dateFormat) && this.getIsVisible(d, dateBoundary)) {
           const positionX = Math.abs(xFn(new Date(d.start_date))) + boxPadding;
-          // console.log(positionX, d, dateBoundary.start_date);
           return `translate(${positionX}, ${boxPadding})`;
         } else {
           return `translate(${boxPadding}, ${boxPadding})`;
@@ -872,7 +870,7 @@ export class NgD3GanttService {
                 .attr('opacity', b => {
                   return Number(this.getWidth(b, dateBoundary, x, config.dateFormat) > 80);
                 });
-            timeSeriesContainer.selectAll('.date').attr('class', 'date');
+            timeSeriesContainer.selectAll('.date.active').attr('class', 'date');
             timeSeriesContainer.selectAll('.date-block').attr('class', 'date-block');
 
             blockContent.each( (entry: IGanttData, i) => {
