@@ -252,10 +252,29 @@ export class NgD3GanttService {
       .attr('y1', 0)
       .attr('y2', height);
     const circleRadius = 6;
+
     rootEl.append('circle')
       .attr('class', 'current-day-anchor')
-      .attr('transform', `translate(${x1}, ${circleRadius})`)
-      .attr('r', circleRadius);
+      .attr('cx', x1)
+      .attr('cy', circleRadius)
+      // .attr('transform', `translate(${x1}, ${circleRadius})`)
+      .attr('r', circleRadius)
+      /* tslint:disable-next-line */
+      .on('mouseover', function() {
+        console.log(tooltip.style('visibility'));
+        tooltip.style('visibility', 'visible');
+      })
+      /* tslint:disable-next-line */
+      .on('mouseout', function() {
+        tooltip.style('visibility', 'hidden');
+      });
+    const tooltip =  rootEl
+      .append('text')
+      .attr('x', x1 + circleRadius)
+      .attr('y', circleRadius * 4)
+      .attr('class', 'tooltip')
+      .style('visibility', 'hidden')
+      .text('Today');
   }
 
   private drawTimeSeries(timeSeries, dateBoundary, subheaderRanges, x: any, dateFormat: string) {
@@ -727,7 +746,8 @@ export class NgD3GanttService {
         this.getActualWidth(this.currentDay, x),
         height,
         x(new Date(this.currentDay.start_date)),
-        x(new Date(this.currentDay.start_date)));
+        x(new Date(this.currentDay.start_date))
+      );
     }
 
 

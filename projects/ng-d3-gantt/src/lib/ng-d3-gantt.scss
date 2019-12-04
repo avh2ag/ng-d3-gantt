@@ -116,6 +116,9 @@ $progress-bar-progress-fill: $active-color;
   .current-day-anchor {
     fill: $current-day-color;
   }
+  .tooltip {
+    stroke: $current-day-color;
+  }
 
   .progress-bar {
     fill: $progress-bar-container-fill;
