@@ -244,13 +244,18 @@ export class NgD3GanttService {
   }
 
   private drawCurrentDayLine(rootEl, width: number, height: number, x1: number, x2: number) {
-    return rootEl
+    rootEl
       .append('line')
       .attr('class', 'current-day-line')
       .attr('x1', x1)
       .attr('x2', x1)
       .attr('y1', 0)
       .attr('y2', height);
+    const circleRadius = 6;
+    rootEl.append('circle')
+      .attr('class', 'current-day-anchor')
+      .attr('transform', `translate(${x1}, ${circleRadius})`)
+      .attr('r', circleRadius);
   }
 
   private drawTimeSeries(timeSeries, dateBoundary, subheaderRanges, x: any, dateFormat: string) {

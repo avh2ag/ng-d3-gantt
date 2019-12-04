@@ -113,6 +113,9 @@ $progress-bar-progress-fill: $active-color;
     stroke: $current-day-color;
     stroke-width: 3;
   }
+  .current-day-anchor {
+    fill: $current-day-color;
+  }
 
   .progress-bar {
     fill: $progress-bar-container-fill;
