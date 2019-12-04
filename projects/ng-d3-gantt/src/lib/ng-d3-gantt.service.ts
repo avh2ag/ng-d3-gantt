@@ -307,10 +307,8 @@ export class NgD3GanttService {
         .data(subheaderRanges)
         .enter().append('text')
         .attr('x', d => {
-          return (x(new Date(d.start_date)) + 10);
-        })
-        .attr('width', (d: IGanttData) => {
-          return this.getWidth(d, dateBoundary, x, dateFormat);
+          const rectWidth = this.getWidth(d, dateBoundary, x, dateFormat);
+          return (x(new Date(d.start_date)) + (rectWidth / 2) - 3);
         })
         .attr('y', 25) // make this part of config as well, lower pri
         .text( d => {

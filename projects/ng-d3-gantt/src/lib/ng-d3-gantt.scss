@@ -71,8 +71,7 @@ $progress-bar-progress-fill: $active-color;
   .date-title {
     font-size: 14px;
     text-align: center;
-    width: 50%;
-    margin: 0 auto;
+    text-anchor: middle;
   }
 
   .date-line {
