@@ -460,7 +460,7 @@ export class NgD3GanttService {
           return this.getBlockId(d);
         })
         .attr('transform', (d, i)  => {
-            return 'translate(' + domainFn(new Date(d.start_date)) + ',' + 0 + ')';
+          return 'translate(' + domainFn(new Date(d.start_date)) + ',' + 0 + ')';
         });
   }
 
@@ -483,7 +483,8 @@ export class NgD3GanttService {
           return yFn(i + 1);
         })
         .attr('width', d => {
-          return this.getActualWidth(d, xFn) + 5;
+          console.log();
+          return this.getActualWidth(d, xFn) + 5; // max out as max width
         });
     const colorCode = rootEl.append('rect')
       .attr('class', 'color-code')
@@ -581,8 +582,8 @@ export class NgD3GanttService {
   }
 
   private getIsVisible(node: {start_date: any, end_date: any}, dateBoundary: { start_date: any, end_date: any }) {
-    const startDateVisible = moment(node.start_date, 'MM/DD/YYYY').isBetween(dateBoundary.start_date, dateBoundary.end_date, 'days');
-    const endDateVisible = moment(node.end_date, 'MM/DD/YYYY').isBetween(dateBoundary.start_date, dateBoundary.end_date, 'days');
+    const startDateVisible = moment(node.start_date, 'MM/DD/YYYY').isAfter(new Date(dateBoundary.start_date));
+    const endDateVisible = moment(node.end_date, 'MM/DD/YYYY').isBefore(new Date(dateBoundary.end_date));
     return startDateVisible || endDateVisible;
   }
 
