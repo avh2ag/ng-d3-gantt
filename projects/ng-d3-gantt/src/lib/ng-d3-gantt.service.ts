@@ -450,7 +450,7 @@ export class NgD3GanttService {
       .attr('transform', 'translate(0, 20)');
   }
 
-  private drawBlocks(rootEl, data, domainFn: (d) => number, className: string) {
+  private drawBlocks(rootEl, data, domainFn: (d) => number, className: string, dateBoundary) {
     return rootEl.selectAll(`.${className}`)
         .data(data)
         .enter()
@@ -460,7 +460,9 @@ export class NgD3GanttService {
           return this.getBlockId(d);
         })
         .attr('transform', (d, i)  => {
-          return 'translate(' + domainFn(new Date(d.start_date)) + ',' + 0 + ')';
+          // reset start date to minimum date for drawing the block if going to be included
+          const startDate = this.startsBefore(d, dateBoundary.start_date, 'MM/DD/YYYY') ? dateBoundary.start_date : d.start_date;
+          return 'translate(' + domainFn(new Date(startDate)) + ',' + 0 + ')';
         });
   }
 
@@ -554,8 +556,8 @@ export class NgD3GanttService {
       // width = Math.abs(x(new Date(dateBoundary.end_date)) - x(new Date(node.start_date)));
       width = this.getDomainDistance(dateBoundary.end_date, node.start_date, domainFn);
     } else if (this.startsBefore(node, dateBoundary.start_date, dateFormat)) {
-        width = Math.abs(domainFn(new Date(dateBoundary.start_date)) - domainFn(new Date(node.end_date)));
-        // width = this.getDomainDistance()
+        // width = Math.abs(domainFn(new Date(dateBoundary.start_date)) - domainFn(new Date(node.end_date)));
+        width = this.getDomainDistance(dateBoundary.start_date, node.end_date, domainFn);
     } else {
         width = this.getActualWidth(node, domainFn);
     }
@@ -760,7 +762,7 @@ export class NgD3GanttService {
     const blockContainerClass = 'blocks';
     const blockContainer = this.drawBlockContainer(canvasArea, blockContainerClass);
     const blocksClass = 'gantt-entry-box'; // abstract up
-    const Blocks = this.drawBlocks(blockContainer, data, x, blocksClass);
+    const Blocks = this.drawBlocks(blockContainer, data, x, blocksClass, dateBoundary);
     const blockRectClass = 'gantt-entry-rect';
     const blockArea = this.drawBlockRectangles(Blocks, blockRectClass, blockHeight, progressBarContainerHeight, x, y);
     const blockContentClass = 'gantt-entry';
