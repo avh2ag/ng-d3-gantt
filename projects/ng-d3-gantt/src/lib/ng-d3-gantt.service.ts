@@ -450,7 +450,7 @@ export class NgD3GanttService {
       .attr('transform', 'translate(0, 20)');
   }
 
-  private drawBlocks(rootEl, data, domainFn: (d) => number, className: string, dateBoundary) {
+  private drawBlocks(rootEl, data, domainFn: (d) => number, className: string, dateBoundary, dateFormat: string) {
     return rootEl.selectAll(`.${className}`)
         .data(data)
         .enter()
@@ -461,7 +461,8 @@ export class NgD3GanttService {
         })
         .attr('transform', (d, i)  => {
           // reset start date to minimum date for drawing the block if going to be included
-          const startDate = this.startsBefore(d, dateBoundary.start_date, 'MM/DD/YYYY') ? dateBoundary.start_date : d.start_date;
+          const startDate = this.startsBefore(d, dateBoundary.start_date, dateFormat) ? dateBoundary.start_date : d.start_date;
+          console.log('translating', domainFn(new Date(startDate)), startDate, d.start_date );
           return 'translate(' + domainFn(new Date(startDate)) + ',' + 0 + ')';
         });
   }
@@ -471,7 +472,7 @@ export class NgD3GanttService {
   }
 
   private drawBlockRectangles(rootEl, className: string, blockHeight: number, progressBarContainerHeight: number,
-                              xFn: (d) => number, yFn: (d) => number) {
+                              xFn: (d) => number, yFn: (d) => number, dateBoundary, dateFormat) {
     const primaryRect = rootEl
         .append('rect')
         .attr('class', className)
@@ -485,8 +486,7 @@ export class NgD3GanttService {
           return yFn(i + 1);
         })
         .attr('width', d => {
-          console.log();
-          return this.getActualWidth(d, xFn) + 5; // max out as max width
+          return this.getWidth(d, dateBoundary, xFn, dateFormat) + 5; // max out as max width
         });
     const colorCode = rootEl.append('rect')
       .attr('class', 'color-code')
@@ -762,9 +762,10 @@ export class NgD3GanttService {
     const blockContainerClass = 'blocks';
     const blockContainer = this.drawBlockContainer(canvasArea, blockContainerClass);
     const blocksClass = 'gantt-entry-box'; // abstract up
-    const Blocks = this.drawBlocks(blockContainer, data, x, blocksClass, dateBoundary);
+    const Blocks = this.drawBlocks(blockContainer, data, x, blocksClass, dateBoundary, config.dateFormat);
     const blockRectClass = 'gantt-entry-rect';
-    const blockArea = this.drawBlockRectangles(Blocks, blockRectClass, blockHeight, progressBarContainerHeight, x, y);
+    const blockArea = this.drawBlockRectangles(Blocks, blockRectClass, blockHeight,
+        progressBarContainerHeight, x, y, dateBoundary, config.dateFormat);
     const blockContentClass = 'gantt-entry';
     const blockContent = this.drawBlockContent(Blocks, blockContentClass, config.box_padding, dateBoundary, x, config.dateFormat);
     const blockTitleClass = `title`;
@@ -812,15 +813,13 @@ export class NgD3GanttService {
             .selectAll(`.${blockRectClass}`)
             .attr('class', `${blockRectClass} active`)
             .attr('width', b => {
-              const width = this.getActualWidth(b, x) + config.box_padding;
-              const getWidthVal = this.getWidth(b, dateBoundary, x, config.dateFormat);
+              const width = this.getWidth(b, dateBoundary, x, config.dateFormat);
               const longestFieldName = this.getLongestFieldName(b, config.dateFormat); // switch this to return the field
               const longestFieldNode = filteredEntry.select(`.${longestFieldName}`);
               const isClippedText = longestFieldNode.attr('is-clipped');
               if (isClippedText) {
                 const textWidth = longestFieldNode.node().getComputedTextLength();
-                const widthToAdd = Math.max(textWidth - getWidthVal, getWidthVal);
-                return width + widthToAdd + config.box_padding;
+                return width + textWidth + config.box_padding;
               } else {
                 return width;
               }
@@ -866,7 +865,7 @@ export class NgD3GanttService {
             Blocks.selectAll(`.${blockRectClass}`)
                 .attr('class', `${blockRectClass}`)
                 .attr('width', b => {
-                  return this.getActualWidth(b, x) + config.box_padding;
+                  return this.getWidth(b, dateBoundary, x, config.dateFormat) + config.box_padding;
                 });
 
             Blocks.selectAll('.TermType')
