@@ -1,6 +1,10 @@
 {
   "name": "ng-d3-gantt",
-  "version": "1.0.11",
+  "version": "1.0.18",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/avh2ag/ng-d3-gantt"
+  },
   "author": "Alex Harasty",
   "license": "MIT",
   "peerDependencies": {
