@@ -36,8 +36,11 @@ export class NgD3GanttService {
                 config.metrics.years[i] = config.metrics.years[i] + config.metrics.years.length;
             }
             break;
-        case 'sprint':
-            break;
+        case 'fiscal':
+          // months = this.getMonthsOftheYear(config.metrics.year);
+          // subheaderRanges = config.metrics.cycles;
+          // headerRanges = [this.getYearBoundary(config.metrics.year)];
+          break;
         case 'monthly':
             config.metrics.month = moment(config.metrics.month, 'MMMM YYYY').add(1, 'months').format('MMMM YYYY');
             break;
@@ -64,7 +67,7 @@ export class NgD3GanttService {
               config.metrics.years[i] = config.metrics.years[i] - config.metrics.years.length;
             }
             break;
-        case 'sprint':
+        case 'fiscal':
             break;
         case 'monthly':
             config.metrics.month = moment(config.metrics.month, 'MMMM YYYY')
@@ -434,7 +437,7 @@ export class NgD3GanttService {
         months = this.getMonthsOftheYear(config.metrics.year);
         subheaderRanges = this.getMonthsRange(months);
         headerRanges = [this.getYearBoundary(config.metrics.year)];
-      } else if (config.metrics.type === 'sprint') {
+      } else if (config.metrics.type === 'fiscal') {
         months = this.getMonthsOftheYear(config.metrics.year);
         subheaderRanges = config.metrics.cycles;
         headerRanges = [this.getYearBoundary(config.metrics.year)];
@@ -462,7 +465,6 @@ export class NgD3GanttService {
         .attr('transform', (d, i)  => {
           // reset start date to minimum date for drawing the block if going to be included
           const startDate = this.startsBefore(d, dateBoundary.start_date, dateFormat) ? dateBoundary.start_date : d.start_date;
-          console.log('translating', domainFn(new Date(startDate)), startDate, d.start_date );
           return 'translate(' + domainFn(new Date(startDate)) + ',' + 0 + ')';
         });
   }
@@ -728,6 +730,7 @@ export class NgD3GanttService {
     /* Chart Background */
     const chartTitle = this.drawChartTitle(ROOT_ELEMENT, headerRanges, x, y, drawAreawidth, dateBoundary, config.dateFormat);
     const timeSeriesContainer = this.drawTimeSeriesContainer(ROOT_ELEMENT, drawAreawidth);
+    // need to update for if yearly, then return the offset
     this.drawTransitions(state, chartTitle, timeSeriesContainer);
 
     const canvasArea = this.drawCanvasArea(ROOT_ELEMENT, height, drawAreawidth);

@@ -9,7 +9,7 @@ export interface IGanttConfig {
 }
 
 export interface IGanttMetrics {
-  type: 'overall' | 'quarterly' | 'sprint' | 'monthly' | 'yearly';
+  type: 'overall' | 'quarterly' | 'fiscal' | 'monthly' | 'yearly';
   year?: number;
   years?: Array<number>;
   month?: string;

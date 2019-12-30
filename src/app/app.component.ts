@@ -63,27 +63,27 @@ export class AppComponent {
   public cycles = [
     {
       id: 1,
-      name: 'Cycle 1',
+      name: 'Q1',
       start_date: '01/01/2019',
-      end_date: '02/28/2019',
+      end_date: '03/31/2019',
     },
     {
       id: 2,
-      name: 'Cycle 2',
-      start_date: '05/01/2019',
+      name: 'Q2',
+      start_date: '04/01/2019',
       end_date: '06/30/2019',
     },
     {
       id: 3,
-      name: 'Cycle 3',
+      name: 'Q3',
       start_date: '07/01/2019',
-      end_date: '10/30/2019',
+      end_date: '9/30/2019',
     },
     {
       id: 3,
-      name: 'Cycle 4',
+      name: 'Q4',
       start_date: '10/01/2019',
-      end_date: '12/30/2019',
+      end_date: '12/31/2019',
     }
   ];
   public chartContainerName = 'test-container';
@@ -92,7 +92,8 @@ export class AppComponent {
     box_padding: 8, // Padding for the blocks in d3 units not pixels
     // metrics: {type: 'overall', years: [2016, 2019, 2018]}, // Type of gantt
     // metrics: {type: 'sprint', year: 2019, cycles: this.cycles}, // Type of gantt
-    metrics: {type: 'yearly', year: 2019}, // Type of gantt
+    metrics: { type: 'fiscal', year: 2019, cycles: this.cycles },
+    // metrics: {type: 'yearly', year: 2019}, // Type of gantt
     // metrics: {type: 'monthly', month: 'March 2019'}, // For Monthly Data
     // metrics: {type: 'quarterly', months: ['January 2019', 'February 2019', 'March 2019']}, // For quarterly or half yearly data
     isShowProgressBar: true,
