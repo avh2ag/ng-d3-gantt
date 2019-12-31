@@ -37,9 +37,7 @@ export class NgD3GanttService {
             }
             break;
         case 'fiscal':
-          // months = this.getMonthsOftheYear(config.metrics.year);
-          // subheaderRanges = config.metrics.cycles;
-          // headerRanges = [this.getYearBoundary(config.metrics.year)];
+          config.metrics.year = config.metrics.year + 1;
           break;
         case 'monthly':
             config.metrics.month = moment(config.metrics.month, 'MMMM YYYY').add(1, 'months').format('MMMM YYYY');
@@ -68,7 +66,8 @@ export class NgD3GanttService {
             }
             break;
         case 'fiscal':
-            break;
+          config.metrics.year = config.metrics.year - 1;
+          break;
         case 'monthly':
             config.metrics.month = moment(config.metrics.month, 'MMMM YYYY')
               .subtract(1, 'months')
@@ -297,7 +296,7 @@ export class NgD3GanttService {
           return x(new Date(d.start_date));
         })
         .attr('width', (d: IGanttData) => {
-          return this.getWidth(d, dateBoundary, x, dateFormat);
+          return this.getActualWidth(d, x);
         })
         .attr('height', 40)
         .attr('class', (d: IGanttData) => {
@@ -309,7 +308,7 @@ export class NgD3GanttService {
         .data(subheaderRanges)
         .enter().append('text')
         .attr('x', d => {
-          const rectWidth = this.getWidth(d, dateBoundary, x, dateFormat);
+          const rectWidth = this.getActualWidth(d, x);
           return (x(new Date(d.start_date)) + (rectWidth / 2) - 3);
         })
         .attr('y', 25) // make this part of config as well, lower pri
@@ -558,8 +557,8 @@ export class NgD3GanttService {
       // width = Math.abs(x(new Date(dateBoundary.end_date)) - x(new Date(node.start_date)));
       width = this.getDomainDistance(dateBoundary.end_date, node.start_date, domainFn);
     } else if (this.startsBefore(node, dateBoundary.start_date, dateFormat)) {
-        // width = Math.abs(domainFn(new Date(dateBoundary.start_date)) - domainFn(new Date(node.end_date)));
-        width = this.getDomainDistance(dateBoundary.start_date, node.end_date, domainFn);
+      // width = Math.abs(domainFn(new Date(dateBoundary.start_date)) - domainFn(new Date(node.end_date)));
+      width = this.getDomainDistance(node.end_date, dateBoundary.start_date, domainFn);
     } else {
         width = this.getActualWidth(node, domainFn);
     }
@@ -707,7 +706,6 @@ export class NgD3GanttService {
     const months = dateInfo.months;
     const subheaderRanges = dateInfo.subheaderRanges;
     const headerRanges = dateInfo.headerRanges;
-
     dateBoundary.start_date = moment(months[0], 'MMM YYYY').startOf('month').toDate();
     dateBoundary.end_date = moment(months[months.length - 1], 'MMM YYYY').endOf('month').toDate();
     /* End Date Info/Boundary Setup */
