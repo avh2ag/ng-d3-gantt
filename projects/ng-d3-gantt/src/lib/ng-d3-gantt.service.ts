@@ -183,9 +183,8 @@ export class NgD3GanttService {
       .attr('height', height + this.margin.top + this.margin.bottom);
   }
 
-  private drawStartLines(rootEl, className: string, data: Array<IGanttData>, x: any, y: any) {
+  private drawStartLines(rootEl, data: Array<IGanttData>, className: string,  x: any, y: any) {
     return rootEl.append('g')
-    .attr('transform', 'translate(' + this.margin.left + ',' + 0 + ')')
     .selectAll(`.${className}`)
       .data(data)
       .enter()
@@ -199,11 +198,9 @@ export class NgD3GanttService {
       })
       .attr('y1', 0)
       .attr('y2', (d, i) => {
-          return (y(i + 1) + 20);
+          return (y(i + 1) + (i * this.BLOCK_SPACING) + 20);
       })
-      .attr('transform', (d, i) => {
-        return `translate(-2, ${i * this.BLOCK_SPACING})`;
-      });
+      .attr('transform', `translate(-2, 0)`);
   }
 
   private drawEndLines(rootEl, data: Array<IGanttData>, className: string, x: any, y: any) {
@@ -243,7 +240,7 @@ export class NgD3GanttService {
         return x(new Date(d.start_date));
       })
       .attr('y1', 0)
-      .attr('y2', height);
+      .attr('y2', height * 2);
     return lines;
   }
 
@@ -696,7 +693,7 @@ export class NgD3GanttService {
     const defaultHeight = 100;
     const progressBarContainerHeight = 10;
     const MAX_RECT_HEIGHT = config.isShowProgressBar ? defaultHeight : defaultHeight - progressBarContainerHeight;
-    const CHART_HEIGHT = d3.max([((data.length * MAX_RECT_HEIGHT) + MAX_RECT_HEIGHT), 300]);
+    const CHART_HEIGHT = d3.max([((data.length * (MAX_RECT_HEIGHT + this.BLOCK_SPACING)) + MAX_RECT_HEIGHT), 300]);
 
 
     /* Date Info/Boundary setup */
@@ -731,7 +728,7 @@ export class NgD3GanttService {
 
     const canvasArea = this.drawCanvasArea(ROOT_ELEMENT, height, drawAreawidth);
     const startLineClassName = 'start-lines';
-    const startLines = this.drawStartLines(canvasArea, startLineClassName, data, x, y);
+    const startLines = this.drawStartLines(canvasArea, data, startLineClassName, x, y);
     const endLineClassName = 'end-lines';
     const endLines = this.drawEndLines(canvasArea, data, endLineClassName, x, y);
     if (config.isShowGridlines) {
