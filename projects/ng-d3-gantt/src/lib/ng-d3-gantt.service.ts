@@ -11,7 +11,7 @@ const moment = moment_;
 export class NgD3GanttService {
   private margin: { top: number, right: number, bottom: number, left: number };
   private currentDay: { start_date: Date, end_date: Date };
-
+  private BLOCK_SPACING = 15;
   constructor() {
     this.currentDay = {
       start_date: moment().startOf('day').toDate(),
@@ -201,7 +201,9 @@ export class NgD3GanttService {
       .attr('y2', (d, i) => {
           return (y(i + 1) + 20);
       })
-      .attr('transform', `translate(-2, 0)`);
+      .attr('transform', (d, i) => {
+        return `translate(-2, ${i * this.BLOCK_SPACING})`;
+      });
   }
 
   private drawEndLines(rootEl, data: Array<IGanttData>, className: string, x: any, y: any) {
@@ -219,7 +221,7 @@ export class NgD3GanttService {
       })
       .attr('y1', 0)
       .attr('y2', (d, i) => {
-          return (y(i + 1) + 20);
+          return (y(i + 1) + (i * this.BLOCK_SPACING) + 20);
       });
   }
 
@@ -464,8 +466,8 @@ export class NgD3GanttService {
           // reset start date to minimum date for drawing the block if going to be included
           const startDate = this.startsBefore(d, dateBoundary.start_date, dateFormat) ? dateBoundary.start_date : d.start_date;
           const translateX = Math.max(domainFn(new Date(startDate)), 0);
-          const blockSpacing = 15;
-          const translateY = blockSpacing * i;
+
+          const translateY = this.BLOCK_SPACING * i;
           return 'translate(' + translateX + ',' + translateY + ')';
         });
   }
