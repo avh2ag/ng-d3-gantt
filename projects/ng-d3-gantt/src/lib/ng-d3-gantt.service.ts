@@ -309,7 +309,7 @@ export class NgD3GanttService {
         .enter().append('text')
         .attr('x', d => {
           const rectWidth = this.getActualWidth(d, x);
-          return (x(new Date(d.start_date)) + (rectWidth / 2) - 3);
+          return (x(new Date(d.start_date)) + (rectWidth / 2));
         })
         .attr('y', 25) // make this part of config as well, lower pri
         .text( d => {
@@ -464,7 +464,8 @@ export class NgD3GanttService {
         .attr('transform', (d, i)  => {
           // reset start date to minimum date for drawing the block if going to be included
           const startDate = this.startsBefore(d, dateBoundary.start_date, dateFormat) ? dateBoundary.start_date : d.start_date;
-          return 'translate(' + domainFn(new Date(startDate)) + ',' + 0 + ')';
+          const translateX = Math.max(domainFn(new Date(startDate)), 0);
+          return 'translate(' + translateX + ',' + 0 + ')';
         });
   }
 
@@ -517,12 +518,11 @@ export class NgD3GanttService {
       .append('g')
       .attr('class', className)
       .attr('transform', (d, i) => {
+        let positionX = 0;
         if (this.startsBefore(d, dateBoundary.start_date, dateFormat) && this.getIsVisible(d, dateBoundary)) {
-          const positionX = Math.abs(xFn(new Date(d.start_date))) + boxPadding;
-          return `translate(${positionX}, ${boxPadding})`;
-        } else {
-          return `translate(${boxPadding}, ${boxPadding})`;
+          positionX = Math.max(xFn(new Date(d.start_date)), 0);
         }
+        return `translate(${positionX + boxPadding}, ${boxPadding})`;
       });
   }
 
@@ -681,9 +681,7 @@ export class NgD3GanttService {
       }
     }
   }
-  private getFontSize(parentEl, selector: string): number {
-    return parseFloat(parentEl.select(selector).style('font-size'));
-  }
+
   private getIsBetween(date, dateRange, dateFormat: string) {
     return (moment(date.start_date, dateFormat).isBetween(dateRange.start_date, dateRange.end_date, 'days')
     || moment(date.end_date, dateFormat).isBetween(dateRange.start_date, dateRange.end_date, 'days'));

@@ -23,8 +23,8 @@ export class AppComponent {
     {
       id: 2,
       title: 'Step 2',
-      start_date: '11/01/2019',
-      end_date: '03/09/2018',
+      start_date: '11/01/2018',
+      end_date: '03/09/2019',
       subtitle: 'Short subtitle',
       completion_percentage: 29,
       color: '#05f20c',
@@ -55,6 +55,14 @@ export class AppComponent {
       subtitle: 'Short subtitle',
       completion_percentage: 29,
       // color: '#423db6',
+    },
+    {
+      id: 6,
+      title: 'test title',
+      start_date: '03/01/2019',
+      end_date: '03/15/2019',
+      subtitle: 'get it out',
+      color: 'purple'
     }
   ];
   public dataAsync = of(this.data);
@@ -92,9 +100,9 @@ export class AppComponent {
     box_padding: 8, // Padding for the blocks in d3 units not pixels
     // metrics: {type: 'overall', years: [2016, 2019, 2018]}, // Type of gantt
     // metrics: {type: 'sprint', year: 2019, cycles: this.cycles}, // Type of gantt
-    metrics: { type: 'fiscal', year: 2019, cycles: this.cycles },
+    // metrics: { type: 'fiscal', year: 2019, cycles: this.cycles },
     // metrics: {type: 'yearly', year: 2019}, // Type of gantt
-    // metrics: {type: 'monthly', month: 'March 2019'}, // For Monthly Data
+    metrics: {type: 'monthly', month: 'March 2019'}, // For Monthly Data
     // metrics: {type: 'quarterly', months: ['January 2019', 'February 2019', 'March 2019']}, // For quarterly or half yearly data
     isShowProgressBar: true,
     isShowGridlines: true,
