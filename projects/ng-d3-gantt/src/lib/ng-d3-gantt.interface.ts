@@ -4,6 +4,7 @@ export interface IGanttConfig {
   isShowProgressBar: boolean;
   isShowGridlines: boolean;
   dateFormat: string;
+  blockSpacing: number;
   emptyText?: string;
   onClick: (data: any) => void;
 }

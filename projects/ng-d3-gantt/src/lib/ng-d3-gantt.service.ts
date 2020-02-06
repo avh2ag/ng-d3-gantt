@@ -11,7 +11,7 @@ const moment = moment_;
 export class NgD3GanttService {
   private margin: { top: number, right: number, bottom: number, left: number };
   private currentDay: { start_date: Date, end_date: Date };
-  private BLOCK_SPACING = 15;
+  private config: IGanttConfig;
   constructor() {
     this.currentDay = {
       start_date: moment().startOf('day').toDate(),
@@ -198,9 +198,8 @@ export class NgD3GanttService {
       })
       .attr('y1', 0)
       .attr('y2', (d, i) => {
-          return (y(i + 1) + (i * this.BLOCK_SPACING) + 20);
-      })
-      .attr('transform', `translate(-2, 0)`);
+          return (y(i + 1) + (i * this.config.blockSpacing)) + 10;
+      });
   }
 
   private drawEndLines(rootEl, data: Array<IGanttData>, className: string, x: any, y: any) {
@@ -218,7 +217,7 @@ export class NgD3GanttService {
       })
       .attr('y1', 0)
       .attr('y2', (d, i) => {
-          return (y(i + 1) + (i * this.BLOCK_SPACING) + 20);
+          return (y(i + 1) + (i * this.config.blockSpacing)) + 10;
       });
   }
 
@@ -463,8 +462,7 @@ export class NgD3GanttService {
           // reset start date to minimum date for drawing the block if going to be included
           const startDate = this.startsBefore(d, dateBoundary.start_date, dateFormat) ? dateBoundary.start_date : d.start_date;
           const translateX = Math.max(domainFn(new Date(startDate)), 0);
-
-          const translateY = this.BLOCK_SPACING * i;
+          const translateY = this.config.blockSpacing * i;
           return 'translate(' + translateX + ',' + translateY + ')';
         });
   }
@@ -683,6 +681,7 @@ export class NgD3GanttService {
   /* end helper methods */
 
   public draw(state: string, data: Array<IGanttData>, config: IGanttConfig, elementId: string) {
+    this.config = { ...config };
     const dateBoundary: { start_date: Date | string, end_date: Date | string} = {
       start_date: '',
       end_date: ''
@@ -693,7 +692,7 @@ export class NgD3GanttService {
     const defaultHeight = 100;
     const progressBarContainerHeight = 10;
     const MAX_RECT_HEIGHT = config.isShowProgressBar ? defaultHeight : defaultHeight - progressBarContainerHeight;
-    const CHART_HEIGHT = d3.max([((data.length * (MAX_RECT_HEIGHT + this.BLOCK_SPACING)) + MAX_RECT_HEIGHT), 300]);
+    const CHART_HEIGHT = d3.max([(( (data.length + 1)  * (MAX_RECT_HEIGHT + config.blockSpacing)) + MAX_RECT_HEIGHT), 300]);
 
 
     /* Date Info/Boundary setup */
