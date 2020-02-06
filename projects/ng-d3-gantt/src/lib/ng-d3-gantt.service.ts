@@ -338,7 +338,7 @@ export class NgD3GanttService {
       .attr('transform', `translate(${EmptyMessageX}, ${emptyBlockPos})`);
   }
 
-  private drawblockInfoContainer(rootEl, boxPadding, className: string, blockInfoHeight: number, yFn: (idx) => number) {
+  private drawBlockInfoContainer(rootEl, boxPadding, className: string, blockInfoHeight: number, yFn: (idx) => number) {
     return rootEl
       .append('g')
       .attr('class', className)
@@ -448,7 +448,7 @@ export class NgD3GanttService {
     return rootEl
       .append('g')
       .attr('class', className)
-      .attr('transform', 'translate(0, 20)');
+      .attr('transform', 'translate(0, 10)');
   }
 
   private drawBlocks(rootEl, data, domainFn: (d) => number, className: string, dateBoundary, dateFormat: string) {
@@ -464,7 +464,9 @@ export class NgD3GanttService {
           // reset start date to minimum date for drawing the block if going to be included
           const startDate = this.startsBefore(d, dateBoundary.start_date, dateFormat) ? dateBoundary.start_date : d.start_date;
           const translateX = Math.max(domainFn(new Date(startDate)), 0);
-          return 'translate(' + translateX + ',' + 0 + ')';
+          const blockSpacing = 15;
+          const translateY = blockSpacing * i;
+          return 'translate(' + translateX + ',' + translateY + ')';
         });
   }
 
@@ -753,7 +755,7 @@ export class NgD3GanttService {
     }
     /* End Chart Background */
     /* Block Content */
-    const blockHeight = MAX_RECT_HEIGHT - config.box_padding;
+    const blockHeight = MAX_RECT_HEIGHT - (config.box_padding / 2);
     const blockContainerClass = 'blocks';
     const blockContainer = this.drawBlockContainer(canvasArea, blockContainerClass);
     const blocksClass = 'gantt-entry-box'; // abstract up
@@ -766,7 +768,7 @@ export class NgD3GanttService {
     const blockTitleClass = `title`;
     const blockTitle = this.drawBlockTitle(blockContent, blockTitleClass, y, config.box_padding);
     const blockInfoClass = 'block-info';
-    const blockInfoContainer = this.drawblockInfoContainer(blockContent, config.box_padding, blockInfoClass, 26 + config.box_padding, y);
+    const blockInfoContainer = this.drawBlockInfoContainer(blockContent, config.box_padding, blockInfoClass, 26 + config.box_padding, y);
     const blockInfoTextClass = 'block-info-text';
     this.drawblockInfoContent(blockInfoContainer, dateBoundary, blockInfoTextClass, config.dateFormat, x, this.getDuration);
     if (config.isShowProgressBar) {
