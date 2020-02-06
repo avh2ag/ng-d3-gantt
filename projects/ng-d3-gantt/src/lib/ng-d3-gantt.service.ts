@@ -503,6 +503,9 @@ export class NgD3GanttService {
         }
       })
       .attr('width', 4)
+      .attr('fill', 'fill', (d, i) => {
+        return d.color && d.color.length > 0 ? d.color : 'transparent';
+      })
       .style('fill', (d, i) => {
         return d.color && d.color.length > 0 ? d.color : 'transparent';
       });
