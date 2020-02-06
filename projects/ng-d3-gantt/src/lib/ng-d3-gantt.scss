@@ -63,18 +63,18 @@ $progress-bar-progress-fill: $active-color;
   .block-info-text.duration {
     fill: #757575;
   }
-
-  .date {
-    text-anchor: middle;
-  }
-
   .date.active {
     fill: $active-color;
   }
 
   .date-title {
     font-size: 12px;
-    text-align: center;
+    font-weight: 400;
+    text-anchor: middle;
+  }
+  .date-title.active {
+    font-weight: 500;
+    fill: $active-color;
   }
 
   .date-line {
@@ -90,7 +90,8 @@ $progress-bar-progress-fill: $active-color;
   }
   .start-lines, .end-lines {
     stroke-width: 2;
-    stroke: $stroke-accent;
+    // stroke: $stroke-accent;
+    stroke: none;
   }
   .start-lines.active, .end-lines.active {
     stroke-width: 3;

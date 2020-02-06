@@ -101,8 +101,8 @@ export class AppComponent {
     // metrics: {type: 'overall', years: [2016, 2019, 2018]}, // Type of gantt
     // metrics: {type: 'sprint', year: 2019, cycles: this.cycles}, // Type of gantt
     // metrics: { type: 'fiscal', year: 2019, cycles: this.cycles },
-    // metrics: {type: 'yearly', year: 2019}, // Type of gantt
-    metrics: {type: 'monthly', month: 'March 2019'}, // For Monthly Data
+    metrics: {type: 'yearly', year: 2019}, // Type of gantt
+    // metrics: {type: 'monthly', month: 'March 2019'}, // For Monthly Data
     // metrics: {type: 'quarterly', months: ['January 2019', 'February 2019', 'March 2019']}, // For quarterly or half yearly data
     isShowProgressBar: true,
     isShowGridlines: true,

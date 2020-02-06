@@ -299,9 +299,10 @@ export class NgD3GanttService {
           return this.getActualWidth(d, x);
         })
         .attr('height', 40)
-        .attr('class', (d: IGanttData) => {
-            return 'date-block Date-' + moment(d.start_date).format('MMYYYY');
-        });
+        .attr('id', d => {
+          return 'Date-' + moment(d.start_date).format('MMYYYY');
+        })
+        .attr('class', 'date-block');
     timeSeries
         .append('g')
         .selectAll('.bar')
@@ -315,9 +316,7 @@ export class NgD3GanttService {
         .text( d => {
           return d.name;
         })
-        .attr('class', d => {
-            return ' date-title date date-' + moment(d).format('MMYYYY');
-        });
+        .attr('class', 'date-title');
   }
 
   private renderWithNoData(rootEl, emptyBlockWidth: number, emptyBlockHeight: number, chartWidth: number, emptyText: string) {
@@ -539,12 +538,6 @@ export class NgD3GanttService {
   }
 
   /* helper methods */
-  // this entire method is wonky and broken
-  private calculateStringLengthOffset(text: string, fontSize: number) {
-    const paddingRight = 5;
-    return text.length * fontSize + paddingRight;
-  }
-
   private getMonthsOftheYear(year) {
     let months = moment.months();
     months = months.map( month => {
@@ -796,6 +789,9 @@ export class NgD3GanttService {
           config.onClick(d);
         })
         .on('mouseover', (d, i) => {
+          Blocks.style('opacity', (b, i) => {
+            return (d.id === b.id) ? 1 : 0.3;
+          });
           const filteredEntry = blockContent.filter((entry: IGanttData, i) => {
             return entry.id === d.id;
           });
@@ -827,14 +823,13 @@ export class NgD3GanttService {
               }
             });
           // leave this behavior as canon
-          Blocks.selectAll(`.${blockContentClass}`)
-              .style('opacity', (b, i) => {
-                  return (d.id === b.id) ? 1 : 0.3;
-              });
 
           canvasArea.selectAll(`.${startLineClassName}, .${endLineClassName}`)
             .filter((entry: IGanttData) => {
               return entry.id === d.id;
+            })
+            .attr('style', b => {
+              return `stroke: ${b.color};`;
             })
             .attr('class', `active ${startLineClassName} ${endLineClassName}`);
 
@@ -855,13 +850,20 @@ export class NgD3GanttService {
             })
             .attr('class', 'date-block active');
 
+          const activeLabels = timeSeriesContainer.selectAll('.date-title')
+            .filter ((b, i) => {
+              return this.getIsBetween(b, d, config.dateFormat);
+            })
+            .attr('class', 'date-title active');
+
         })
         .on('mouseout', (d, i) => {
-            Blocks.selectAll(`.${blockContentClass}`)
-                .style('opacity', 1);
+            Blocks.style('opacity', 1);
             canvasArea.selectAll(`.${startLineClassName}`)
+              .attr('style', '')
               .attr('class', startLineClassName);
             canvasArea.selectAll(`.${endLineClassName}`)
+              .attr('style', '')
               .attr('class', endLineClassName);
 
             Blocks.selectAll(`.${blockRectClass}`)
@@ -876,6 +878,7 @@ export class NgD3GanttService {
                 });
             timeSeriesContainer.selectAll('.date.active').attr('class', 'date');
             timeSeriesContainer.selectAll('.date-block').attr('class', 'date-block');
+            timeSeriesContainer.selectAll('.date-title').attr('class', 'date-title');
 
             blockContent.each( (entry: IGanttData, i) => {
               if (d.id === entry.id) {
